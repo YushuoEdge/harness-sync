@@ -4,7 +4,7 @@ Manage providers, three model roles, and API keys in one place, then synchronize
 
 **Status: shared framework and Codex adapter implemented; seven original v1 adapters pending.**
 
-The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. The other seven approved v1 harnesses report `not-implemented`. GitHub Copilot CLI is documented as an additional candidate but has no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. The fake test adapter continues to exercise shared workflows without touching real harnesses.
+The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. The other seven approved v1 harnesses report `not-implemented`. GitHub Copilot CLI has a revised managed-provider-registry design as an additional candidate, but no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. The fake test adapter continues to exercise shared workflows without touching real harnesses.
 
 ## Install and test the framework
 

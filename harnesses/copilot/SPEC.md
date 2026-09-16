@@ -1,53 +1,98 @@
 # GitHub Copilot CLI adapter specification
 
-Status: **Native design pending implementation; shared framework ready.** Proposed adapter ID: `copilot`. Native command: `copilot`.
+Status: **Revised registry-based design; native adapter pending implementation and separate approval.** Proposed adapter ID: `copilot`. Native command: `copilot`.
 
-This is an additional candidate outside the currently approved eight-adapter v1 implementation set. The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission, but implementation still requires separate approval. Native facts below were checked against official GitHub documentation on 2026-09-15 (America/New_York); no installed release has been validated. This directory deliberately contains no manifest or adapter code, so the packaged registry does not advertise this harness.
+This is an additional candidate outside the approved eight-adapter v1 implementation set. The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. This revision authorizes documentation work only; there is no manifest, adapter code or packaged registry entry. VS Code Copilot Chat and its `chatLanguageModels.json` are a separate configuration surface and are outside this CLI adapter's scope.
 
 ## Native interface and evidence
 
-GitHub Copilot CLI supports a documented BYOK mode configured through environment variables. The required routing inputs are `COPILOT_PROVIDER_BASE_URL` and `COPILOT_MODEL`; supported provider types are `openai`, `azure` and `anthropic`. `openai` means an OpenAI Chat Completions-compatible endpoint. Optional variables include API-key or bearer-token authentication, wire protocol/model overrides, Azure API version and prompt/output token limits. Models must support streaming and tool calling. [Using your own LLM models in GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-byok-models).
+Official sources were checked on 2026-09-16 (America/New_York):
 
-The executable is `copilot`; `--model` selects a model for one invocation. A persistent hosted-model selection can be stored in `~/.copilot/settings.json` or `$COPILOT_HOME/settings.json`, but environment and command-line model choices take precedence. A custom agent can itself specify a model and has higher precedence than `--model`. [Programmatic reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-programmatic-reference). Installation is available through npm or Homebrew. [CLI quickstart](https://docs.github.com/en/copilot/get-started/cli-quickstart).
+| Source | Confirmed documentation | Remaining verification |
+| --- | --- | --- |
+| [CLI configuration directory](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference#providersjson) | `~/.copilot/providers.json` is a BYOK registry with top-level `providers` and `models` keys. `COPILOT_PROVIDERS_CONFIG` selects another file. A registry declaring any provider or model takes precedence over legacy provider environment variables. | Exact entry schema, credential references, selector grammar, duplicate handling and startup failure behavior in a pinned release |
+| [CLI command reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference) | Documents the registry path variable and legacy precedence. Also documents `COPILOT_PROVIDER_API_KEY_COMMAND`, which outranks the legacy API-key variable. | All inherited routing and credential controls, native overrides and registry-specific authentication behavior |
+| [BYOK guide](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-byok-models) | Still describes environment-based BYOK for `openai`, `azure` and `anthropic`; models require streaming and tool calling. A context window of at least 128k is recommended. | Registry equivalents of those options; wire protocol support cannot be inferred from the environment examples |
+| [Latest release observed: 1.0.85](https://github.com/github/copilot-cli/releases/tag/v1.0.85) | Published 2026-09-16 | Candidate for testing only; neither registry schema nor adapter compatibility is validated by the release number |
 
-BYOK can run without GitHub authentication. GitHub-hosted features still require it, and `COPILOT_OFFLINE=true` suppresses GitHub communication only when explicitly requested; a remote configured provider still receives prompts and code. [Authenticating GitHub Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/authenticate-copilot-cli).
+The references and BYOK guide are not yet aligned. This design uses the registry interface documented by the references, but does not invent native JSON fields or assume that an environment option has a registry equivalent. No runnable native registry example is supplied until the entry schema has been captured from a pinned release's official help, schema or package resources.
 
-## Adapter design
+No `copilot` executable was found on the current PATH during this review. There is no locally verified release or minimum supported version. A future implementation may install or upgrade an explicitly authorized test installation, but adapter detection itself must never install or update software.
 
-- Detect `copilot`, obtain its version through a bounded noninteractive probe, and inspect `copilot help providers` for the exact BYOK capability. Finding the executable alone is not support. Unknown or pre-BYOK interfaces are `unsupported-version`; detection must not log in, update the CLI, initialize settings or invoke a model.
-- Implement launch-time profiles without a native provider file. For the selected provider and role, set a complete child-scoped environment: `COPILOT_PROVIDER_BASE_URL`, `COPILOT_PROVIDER_TYPE`, `COPILOT_PROVIDER_API_KEY` or `COPILOT_PROVIDER_BEARER_TOKEN`, and `COPILOT_MODEL`. Set optional wire/model/token variables only from validated canonical fields or typed adapter options.
-- Before applying the selected overlay, unset every adapter-owned `COPILOT_PROVIDER_*` routing or credential variable and `COPILOT_MODEL` from the inherited child environment. Do not clear GitHub authentication variables unless a documented conflict is proven. Never place a provider key in argv.
-- Map canonical `anthropic` to native provider type `anthropic`. Map canonical `openai-chat` to `openai`. Treat `openai-responses` as incompatible until a tested release proves the exact `COPILOT_PROVIDER_WIRE_API` value and request behavior. There is no direct v1 `google-genai` mapping.
-- Support Azure only through an explicit per-harness override with typed options for API version, well-known model ID and wire deployment name. Do not infer Azure from a hostname or treat a deployment name as a universal model ID.
-- Use the core's resolved provider-local model ID for `COPILOT_MODEL`. If wire-model remapping is explicitly configured, keep the canonical capability ID and provider-facing wire ID distinct. Preserve punctuation, slashes, case and dated IDs.
-- Keep Copilot's normal home, sessions, settings, GitHub login, plugins, skills, custom agents and MCP configuration shared. Do not set `COPILOT_HOME` or create a substitute home merely to route a provider.
-- Reject native arguments that can replace the selected provider/model or escape the managed profile. In particular, reject `--model` and initially reject `--agent`, because a custom agent's model can outrank the managed selection. This restriction may be relaxed only after versioned tests prove safe inheritance for agents without their own model.
-- Do not enable `COPILOT_OFFLINE` implicitly. A typed harness option may request it, but the plan must explain that remote provider traffic remains network traffic and GitHub-hosted features become unavailable.
+`~/.copilot/settings.json` contains global CLI preferences, including model selection; it is not the BYOK registry. Repository/local settings and native flags can also affect model selection. `COPILOT_HOME` changes the entire configuration/state directory. Keep that existing directory shared during managed launches. [CLI configuration reference](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference).
 
-No profile artifact is required beyond the common managed wrapper and environment export machinery. The adapter's `profiles()` may therefore return no native files; `launch()` is the authoritative routing boundary. Tests must prove that a provider/role change takes effect on every fresh managed launch.
+BYOK can run without GitHub authentication, while GitHub-hosted features may require it. Offline mode is an explicit choice and does not prevent traffic to a remote model provider. [Authentication](https://docs.github.com/en/copilot/how-tos/copilot-cli/set-up-copilot-cli/authenticate-copilot-cli) and [BYOK/offline guidance](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-byok-models#running-in-offline-mode).
 
-## Authorized default writes
+## Managed provider registries
 
-The initial adapter must return no default artifacts and reject `default.write: true` or `--write-defaults` with an explicit unsupported diagnostic. `~/.copilot/settings.json` can persist a model choice, but the documented custom-provider endpoint and credential interface is environment-based. Writing only `model` would risk pairing it with stale or unrelated inherited provider variables.
+The proposed strategy is a separate registry for each provider and role, selected only for the launched child process. Never temporarily swap or edit the user's global registry to route a managed launch.
 
-The bare `copilot` command remains untouched and uses the user's native environment and settings. A future default design needs a reviewed, atomic way to activate the full endpoint/type/credential/model tuple; approval to edit `settings.json` alone is insufficient.
+```text
+<context.paths.profile("copilot", provider.command_alias)>/
+  simple/providers.json
+  daily/providers.json
+  complex/providers.json
+```
+
+With default paths, this is `~/.config/harness-sync/generated/profiles/copilot/<alias>/<role>/providers.json`. These are proposed managed paths, not Copilot's default files. Each registry contains only the selected provider and the selected role's model. It does not import the user's global registry or unrelated provider credentials. Native built-in models may still exist; the selected model must resolve to the managed entry.
+
+- `profiles(provider, context)` returns three `scope="profile"` artifacts under the managed root, mode `0600`, with stable ownership such as `copilot/<provider-name>/<role>`. The common transaction engine stages, verifies and commits them before launch.
+- Use deterministic native provider/model selectors with reserved `hs-` identities, if the verified registry grammar supports them. A role selector is distinct from the upstream API model ID. The exact native selector and entry field names must come from release evidence.
+- Resolve upstream identity through `model.upstream_id("copilot")`; preserve case, punctuation, slashes and dated IDs. Repeated upstream IDs across roles are valid. Registry selectors must not conflate models from different providers or replace the wire ID with a display label.
+- Prefer a verified registry credential reference to the provider's namespaced `HS_...` child environment. Do not assume `${ENV}`, `${input:...}`, or VS Code secret-reference syntax works in Copilot CLI.
+- If the pinned registry schema requires literal credentials, deferred rendering may place the selected provider's secret in the private managed registry. Plans, logs, argv and representations remain secret-free; staged files, backups and rollback copies follow the core's private-file rules. The README must state which credential method the supported release uses.
+- Keyless local endpoints remain keyless. API-key versus bearer-token mode is a typed adapter option selecting the interpretation of the existing canonical secret reference. Do not accept a literal key or an arbitrary credential command in canonical options.
+- Map canonical headers, metadata and typed options only when their registry meaning is verified. Unsupported supplied fields must fail explicitly rather than being dropped. Preserve base URL paths and append only release-verified API suffixes.
+- Reject a registry that cannot encode the full endpoint/protocol/credential/model tuple. Unsupported registry schemas are `unsupported-version`; never fall back silently to legacy environment BYOK.
+
+The top-level `providers` and `models` keys are documented, but their entry shapes are not specified in the reviewed references. Registry field mapping, auth representation and selector syntax are blocking release gates, not details that an implementer may guess.
+
+## Protocol and option design
+
+| Canonical protocol | Proposed mapping | Enablement gate |
+| --- | --- | --- |
+| `anthropic` | Native Anthropic provider and Messages requests | Registry type and wire behavior proved locally |
+| `openai-chat` | Native OpenAI-compatible provider and Chat Completions requests | Registry type, endpoint path and wire behavior proved locally |
+| `openai-responses` | Conditional candidate; no enabled mapping yet | Exact registry wire API value and Responses behavior proved for a pinned release |
+| `google-genai` | No direct mapping proposed | Requires separate official interface evidence and revised design |
+
+Azure requires an explicit Copilot provider override with typed options for native provider type, API version, capability model ID and wire deployment ID. Never infer Azure from a hostname. Native capability identity, registry selector and provider-facing wire ID are separate concepts; prove which fields determine each. Reject Azure fields on other provider types and conflicting wire options.
+
+Harness/provider/model native options stay in adapter-owned Pydantic schemas under their existing `options` objects. Do not add Copilot field names to the shared schema. Context and output limits must reflect supplied canonical metadata; never manufacture model capacity. Warn below the documented 128k recommendation rather than treating a recommendation as a mandatory API limit.
+
+## Launch and precedence boundary
+
+Every managed provider command performs common pre-launch sync, then `launch()` selects the role registry through an absolute child-scoped `COPILOT_PROVIDERS_CONFIG` and sets `COPILOT_MODEL` to the verified managed selector. `daily` is the wrapper default; other roles use the core's explicit role selection.
+
+```sh
+# Proposed usage after adapter implementation and approval:
+harness-sync plan --harness copilot
+harness-sync sync --harness copilot
+copilot-<alias>
+harness-sync run copilot --provider <alias> --role complex -- ...
+```
+
+- Replace inherited `COPILOT_PROVIDERS_CONFIG` and `COPILOT_MODEL`. Remove adapter-owned legacy `COPILOT_PROVIDER_*` routing/authentication controls, including API-key commands, bearer tokens, custom headers and wire/model/token overrides, before applying the selected registry. Capture the exact controls in versioned fixtures. Do not execute inherited credential commands during probes or managed launches.
+- Retain the user's existing `COPILOT_HOME`, GitHub authentication and normal sessions, plugins, skills, custom agents, permissions and MCP state. Never set OS `HOME` or create a replacement Copilot state directory merely to select a provider.
+- Reject `--model`, initially reject `--agent`, and reject config-directory/provider-registry overrides that can escape the selected tuple. Recognize split and equals forms and native subcommand grammar. Policy and project settings must not silently reroute the managed model.
+- Prove custom-agent and subagent model precedence, built-in utility/compaction model behavior and resumed-session routing. If a mode can bypass the selected tuple and cannot be constrained through an official interface, reject it and document the limitation before advertising support. Do not promise that all internal requests use the selected model without request-level evidence.
+- A missing, malformed, empty or unresolvable managed registry must abort before any model request. Verify Copilot's native behavior and validate artifacts offline; a fallback to GitHub-hosted models or the user's global registry is unacceptable.
+- Do not enable `COPILOT_OFFLINE` implicitly. An explicit typed harness option may request it; explain that a remote configured provider still receives network traffic and some GitHub features become unavailable.
+- Registries take effect on a fresh launch. Key rotation refreshes managed artifacts and launch credentials; no live-session reload promise or background watcher is provided. The original bare `copilot` command remains outside the synchronizer.
+
+## Default configuration policy
+
+The initial adapter does not write `~/.copilot/providers.json`, `~/.copilot/settings.json`, repository/local Copilot settings or shell startup files. `defaults()` rejects `default.write: true` or `--write-defaults` with an explicit unsupported diagnostic. An inherited `COPILOT_PROVIDERS_CONFIG` path is also a native user default, never a managed write destination.
+
+This restriction is a deliberate initial scope boundary, not a claim that Copilot lacks a persistent provider format. A future global-default feature needs separate design/approval for ownership of native provider/model entries, collision handling, credential delivery to bare launches, selector precedence, format-preserving merges, atomic registry/selection updates and rollback. Approval to edit `settings.json` alone does not activate the complete BYOK tuple.
 
 ## Verification and release gates
 
-- Pin supported CLI versions or capability signatures and sanitized outputs for `--version` and `help providers`; verify probes have no native write side effects.
-- Use local stub servers to assert the selected provider type, endpoint path, authentication form, wire API, exact model ID, streaming requests and tool-call exchange. No paid inference is required.
-- Test all three roles, key rotation, keyless local endpoints, API-key versus bearer-token exclusivity, old conflicting environment variables, two concurrent providers and provider/model IDs containing spaces-forbidden characters, punctuation and slashes as applicable.
-- Require or warn on canonical `context_window` below GitHub's documented 128k recommendation, but do not fabricate capacity. Validate optional prompt/output limits and ensure output does not exceed the canonical context window.
-- Verify that malformed endpoints, unsupported protocols, missing model IDs, a model without streaming/tool calling, Azure fields on a non-Azure provider and conflicting wire options fail before any write or launch.
-- Prove that `--model`, custom-agent model precedence and settings-file model precedence cannot silently defeat role selection. Never claim support for `--agent` until this is demonstrated.
-- Confirm that normal Copilot state and GitHub authentication are unchanged, plans/logs/argv contain no secret, and provider secrets exist only in the child environment and the tool's private secret store.
-
-## Command-triggered sync and model identity
-
-Every generated provider command will use the common pre-launch sync contract: refresh this harness/provider, then launch with a complete child-scoped BYOK tuple. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
-
-Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and wire-model remapping. Model selection must never change endpoint or credentials independently.
-
-## Planned directory ownership
-
-After approval, this directory may add `adapter.json`, `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, environment mapping, argument rejection and compatibility checks stay here; shared I/O, wrapper creation and secret handling remain in the core.
+1. Pin exact supported CLI versions/capabilities. Capture sanitized `--version`, `--help`, `help providers`, `help config`, native registry schema/examples and selectors. Probe in a temporary native home if help has write side effects; disable update/login behavior with release-verified controls. Finding a binary or observing a latest release is insufficient.
+2. Capture registry credential handling and API-key/bearer/keyless modes. Test environment references if supported, otherwise private literal serialization and rollback copies. Check that no credential command is executed, no key appears in argv/plans/logs, and only the selected provider's credentials are rendered/delivered.
+3. Use local stubs with dummy keys to prove exact endpoint paths, protocol, authentication, upstream ID, streaming and tool-call exchange for all enabled protocols and roles. No paid inference is required. Test same labels with different IDs, slash-containing IDs, repeated IDs and explicit wire remapping.
+4. Prove a managed registry outranks conflicting global registries and legacy variables. Test inherited path variables, API-key commands, headers, OAuth, user/project/local settings, policy and native flags. Verify unresolvable selectors and missing/invalid/empty registries cannot cause hosted or global fallback.
+5. Test two concurrent providers and roles without global-file swapping, provider switching, key rotation, malformed endpoints, missing IDs, unsupported metadata, absent streaming/tool calling and inconsistent token limits. Model selection must never change endpoint or credentials independently.
+6. Exercise the real shared planner/transaction/launcher with temporary paths. Verify offline artifact schema validation, private permissions, symlink rejection, manual-edit conflicts, rollback, wrapper collisions and rejection of overrides before sync commits.
+7. Inspect fresh, resumed, custom-agent, subagent and internal utility/compaction behavior. Reject unverified modes that can defeat the tuple. Confirm normal sync does not change native user defaults, auth or existing sessions/plugins/MCP state. Distinguish ordinary CLI session writes during execution from adapter writes.
+8. Keep the harness unregistered until the above gates pass. After separate implementation approval, add `adapter.json`, `adapter.py`, versioned fixtures and tests within this directory, following the [adapter development guide](../../docs/adapter-development.md). Shared I/O, wrappers, transactions and secrets remain in the core.
