@@ -2,7 +2,7 @@
 
 Status: **Design only; blocked on a documented CLI custom-provider interface.** Proposed adapter ID: `cursor`. Current primary native command: `agent`; `cursor-agent` remains a compatibility alias.
 
-The [overall specification](../../SPEC.md) requires every adapter to route a complete canonical provider tuple—protocol, base URL, credential and exact model ID—without guessing or silently dropping fields. Native facts below were checked against official Cursor documentation on 2026-09-15 (America/New_York); no installed release has been validated. This directory deliberately contains no manifest or adapter code, so the packaged registry does not advertise Cursor support.
+This research-only design is outside the currently approved eight-adapter v1 implementation set. The [overall specification](../../SPEC.md) requires every adapter to route a complete canonical provider tuple—protocol, base URL, credential and exact model ID—without guessing or silently dropping fields. Native facts below were checked against official Cursor documentation on 2026-09-15 (America/New_York); no installed release has been validated. This directory deliberately contains no manifest or adapter code, so the packaged registry does not advertise Cursor support.
 
 ## Native interface and evidence
 

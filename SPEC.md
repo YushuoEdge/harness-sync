@@ -1,8 +1,8 @@
 # Harness Sync Config — specification
 
-Status: **Shared framework implementation authorized and delivered; native adapters pending.**
+Status: **Shared framework and Codex adapter implemented; remaining native adapters pending.**
 
-This document describes the full target design. The current framework subset and deliberate API refinements are documented in [adapter development](docs/adapter-development.md). In particular: native options are under typed `options` objects; plans currently show metadata rather than native content diffs; prune/best-effort/adopt-changes are pending. No real native support is claimed yet.
+This document describes the full target design. The current framework subset and deliberate API refinements are documented in [adapter development](docs/adapter-development.md). In particular: native options are under typed `options` objects; plans currently show metadata rather than native content diffs; prune/best-effort/adopt-changes are pending. Codex CLI 0.154.0 is the only implemented native adapter.
 
 ## 1. Purpose and scope
 
@@ -10,7 +10,7 @@ One human-edited YAML configuration defines providers and three task roles per p
 
 The proposed executable is `harness-sync` (no short alias installed automatically). Initial platform scope: macOS and Linux, with Bash and Zsh integration. Implementation proposal: Python 3.11+, packaged for `uv tool install` / `pipx`; standard-library argparse, Pydantic and ruamel.yaml in the core; tomlkit and format-preserving JSON/JSONC/JSON5 editing as native adapters require. Dependency versions and JSON editing library will be selected and pinned during implementation. Native Windows, a GUI, protocol proxying, OAuth migration, and automatic task-complexity classification are outside v1.
 
-All eight adapters are required for v1: Claude Code, Codex, Pi, DeepSeek Harness, Kimi Code, OpenCode, Hermes Agent, and OpenClaw. A draft adapter is not implemented support. Each adapter must pass its release gates before v1 can claim support; incompatible provider/harness pairs receive explicit diagnostics.
+All eight originally approved adapters are required for v1: Claude Code, Codex, Pi, DeepSeek Harness, Kimi Code, OpenCode, Hermes Agent, and OpenClaw. GitHub Copilot CLI is an additional documented candidate that requires separate implementation approval. Cursor Agent CLI is a documented blocked design and is outside the v1 implementation set unless a safe custom-provider interface becomes available and its scope is approved. A draft adapter is not implemented support. Each adapter must pass its release gates before v1 can claim support; incompatible provider/harness pairs receive explicit diagnostics.
 
 ## 2. Requirements and decisions
 
@@ -256,6 +256,8 @@ harnesses/
   opencode/{README.md,SPEC.md}
   hermes-agent/{README.md,SPEC.md}
   openclaw/{README.md,SPEC.md}
+  copilot/{README.md,SPEC.md}  # Candidate design; no registry manifest
+  cursor/{README.md,SPEC.md}   # Blocked design; no registry manifest
 # Shared framework exists; native implementations are separate:
 # src/harness_sync/ — CLI, schema, secrets, planner, transactions, launcher
 # harnesses/<id>/adapter.py, fixtures/, tests/ — all harness-specific behavior
@@ -263,7 +265,7 @@ harnesses/
 # pyproject.toml — packaging includes harness adapter resources explicitly
 ```
 
-The adapter registry loads the eight bundled modules from their own directories; no downloaded plugins or config-selected Python imports. The shared core owns filesystem writes, secret resolution, locking, backups, and redaction.
+The adapter registry discovers the eight approved v1 slots from packaged manifests and loads native code only when an adjacent implementation exists; no downloaded plugins or config-selected Python imports are allowed. The documentation-only Copilot and Cursor directories have no manifests and are not advertised by the registry. The shared core owns filesystem writes, secret resolution, locking, backups, and redaction.
 
 Adapter contract (exact types in `src/harness_sync/contracts.py`):
 
@@ -298,7 +300,7 @@ Required tests include:
 - Fresh reads on every managed launch, unchanged-output idempotence, concurrent atomic saves, selection boundaries, default permission changes, missing installations and version changes; bare original commands remain unwrapped.
 - Fault-injected write failure, crash recovery, cross-process locking, external edits, conservative rollback, symlink/path-target checks and permissions.
 - Isolated native smoke checks on every claimed supported version; no paid inference unless explicitly enabled with test credentials.
-- Documentation includes all eight adapters, source links, known limitations and verified-version evidence.
+- Documentation includes all eight v1 adapters, source links, known limitations and verified-version evidence; additional candidate or blocked designs are labeled separately.
 
 ## 12. Implementation boundary
 

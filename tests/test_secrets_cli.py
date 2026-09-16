@@ -66,5 +66,11 @@ def test_installed_cli_detect_without_native_execution(tmp_path):
         env={**os.environ, "PATH": ""},
     )
     assert result.returncode == 0, result.stderr
-    assert len(json.loads(result.stdout)) == 8
-    assert all(d["status"] == "not-implemented" for d in json.loads(result.stdout).values())
+    detections = json.loads(result.stdout)
+    assert len(detections) == 8
+    assert detections["codex"]["status"] == "not-found"
+    assert all(
+        detection["status"] == "not-implemented"
+        for name, detection in detections.items()
+        if name != "codex"
+    )

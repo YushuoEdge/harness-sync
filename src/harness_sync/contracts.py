@@ -29,6 +29,9 @@ class Detection:
     default_paths: tuple[Path, ...] = ()
     profile_paths: tuple[Path, ...] = ()
     capabilities: tuple[str, ...] = ()
+    # Declared native directories whose provider-dependent profile filenames are
+    # not known until rendering. Artifacts must be direct children of these roots.
+    profile_roots: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)

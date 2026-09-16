@@ -160,13 +160,19 @@ def test_symlink_output_rejected(project):
     assert target.read_bytes() == b"do not touch"
 
 
-def test_bundled_slots_are_honestly_unimplemented(project):
+def test_bundled_slots_report_implementation_status(project):
     base, _, _ = project
     registry = Registry.bundled()
     assert len(registry.catalog) == 8
-    assert registry.adapters == {}
+    assert set(registry.adapters) == {"codex"}
     engine = Engine(base.paths, registry)
-    assert all(d.status == "not-implemented" for d in engine.detect().values())
+    detections = engine.detect()
+    assert detections["codex"].status != "not-implemented"
+    assert all(
+        detection.status == "not-implemented"
+        for name, detection in detections.items()
+        if name != "codex"
+    )
     with pytest.raises(UnsupportedError):
         engine.sync(Selection(("pi",)))
 
