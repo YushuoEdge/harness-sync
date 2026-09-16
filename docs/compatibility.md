@@ -1,6 +1,6 @@
 # Adapter compatibility and design review
 
-Status: **Proposed; no adapter has passed native tests.** Public sources checked on 2026-09-14 (America/New_York). Source links and detailed native mappings are in each adapter spec. Documentation can describe a newer release than the user's installed binary; detection must select verified behavior.
+Status: **Shared framework implemented; no native adapter has been implemented or passed native tests.** Public sources checked on 2026-09-14 (America/New_York). Source links and detailed native mappings are in each adapter spec. Documentation can describe a newer release than the user's installed binary; detection must select verified behavior.
 
 ## Configuration strategy
 
@@ -63,3 +63,5 @@ The draft proposes:
 No watcher, daemon, polling or `enabled` settings. Sync targets detected harnesses (or explicit `--harness` selections); each managed launch refreshes its own configuration first. Original bare commands remain intact and require a prior sync or the explicit managed launcher.
 
 `name` is a label; `id` is provider-local and defaults to `name`. Adapters consume the resolved ID and translate only native configuration/selector syntax. A per-harness `id` override supports an explicitly different gateway route. No universal model-name translation catalog is maintained. See the overall spec's model identity section for primary-source evidence and required request-level verification.
+
+Adapter authors should follow the implemented [framework contract and handoff guide](adapter-development.md). The eight manifests are discovery slots, not native implementations.

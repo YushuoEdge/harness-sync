@@ -1,0 +1,5 @@
+{
+  "id": "deepseek-harness",
+  "command": "dsh",
+  "api_version": 1
+}

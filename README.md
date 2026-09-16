@@ -2,9 +2,28 @@
 
 Manage providers, three model roles, and API keys in one place, then synchronize them across coding harnesses.
 
-**Status: specification draft. No application code has been implemented. All commands below describe the proposed interface.**
+**Status: shared framework implemented; native harness adapters pending.**
 
-## Review first
+The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. All eight harnesses currently report `not-implemented`; no native configuration is changed until a verified adapter is added. The fake test adapter exercises the full workflow without touching real harnesses.
+
+## Install and test the framework
+
+```sh
+uv sync --locked
+uv run harness-sync --help
+uv run pytest
+uv run ruff check src tests harnesses
+```
+
+Python 3.11+ is required. Alternatively, install with `python -m pip install .` or `pipx install .`. `uv.lock` pins the development environment.
+
+`init`, `validate`, `detect`, `status`, and `secrets` are usable now. `plan`, `sync`, `run`, and `rollback` are wired to the adapter contract; real native use requires its adapter. `plan --harness all` reports missing adapters, while an explicit unsupported target fails. `prune`, best-effort application, adoption of manual conflicts, and native field-level diffs are not implemented.
+
+## Implement an adapter independently
+
+Read the [adapter development guide](docs/adapter-development.md), then the target adapter's spec. Add `adapter.py` with a `create_adapter()` factory inside its existing harness directory. The packaged registry discovers it automatically. Shared code stays in `src/harness_sync`; native paths, flags, parsers and tests stay in that harness directory.
+
+## Design references
 
 1. [Overall specification](SPEC.md): configuration schema, CLI, secrets, automatic sync, default protection, architecture and acceptance criteria.
 2. [Compatibility matrix](docs/compatibility.md): native configuration strategies and unresolved version checks.
@@ -42,7 +61,7 @@ Replace placeholder endpoint/model IDs with your provider's values. This example
 
 The private `secrets.yaml` holds key values. Generated shell exports use namespaced variables; launchers map them to native variable names in each child process. Harnesses that require file-based keys receive private derived files.
 
-## Intended workflow
+## Native workflow after an adapter is implemented
 
 ```sh
 harness-sync init
@@ -76,8 +95,8 @@ source "${XDG_CONFIG_HOME:-$HOME/.config}/harness-sync/generated/env.sh"
 
 Run this after the file has been generated, or add it to your startup file if you want those variables in each new shell. Use the actual generated path if your configuration location differs. After key rotation, re-source it or open a new shell; existing shell environments do not update automatically. To undo manual setup, remove the lines you added. No shell setup or removal commands are provided by the tool.
 
-## Proposed implementation
+## Implementation scope
 
-Python 3.11+, a shared planning/transaction core, and one adapter directory per harness. Initial platforms: macOS and Linux; documented Bash/Zsh setup. No installation instructions are provided yet because there is no executable to install.
+Framework development is authorized and implemented. Native adapter development remains separate, ready for other agents/sessions. The core uses Python 3.11+, Pydantic, ruamel.yaml and the standard-library CLI parser; it targets macOS/Linux. Native format dependencies will be added by adapters as needed.
 
-Approval is required before implementation, as requested. Approving the tool's code does not enable native default writes. The tool never modifies shell startup files.
+Default writes remain an explicit runtime choice. The tool never modifies shell startup files. Current implementation details and limitations are in the adapter development guide.
