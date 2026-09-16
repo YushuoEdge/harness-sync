@@ -2,9 +2,9 @@
 
 Manage providers, three model roles, and API keys in one place, then synchronize them across coding harnesses.
 
-**Status: shared framework implemented; native harness adapters pending.**
+**Status: shared framework and Codex adapter implemented; seven original v1 adapters pending.**
 
-The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. All eight harnesses currently report `not-implemented`; no native configuration is changed until a verified adapter is added. The fake test adapter exercises the full workflow without touching real harnesses.
+The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. The other seven approved v1 harnesses report `not-implemented`. GitHub Copilot CLI is documented as an additional candidate but has no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. The fake test adapter continues to exercise shared workflows without touching real harnesses.
 
 ## Install and test the framework
 
@@ -17,7 +17,7 @@ uv run ruff check src tests harnesses
 
 Python 3.11+ is required. Alternatively, install with `python -m pip install .` or `pipx install .`. `uv.lock` pins the development environment.
 
-`init`, `validate`, `detect`, `status`, and `secrets` are usable now. `plan`, `sync`, `run`, and `rollback` are wired to the adapter contract; real native use requires its adapter. `plan --harness all` reports missing adapters, while an explicit unsupported target fails. `prune`, best-effort application, adoption of manual conflicts, and native field-level diffs are not implemented.
+`init`, `validate`, `detect`, `status`, and `secrets` are usable now. `plan`, `sync`, `run`, and `rollback` work with implemented adapters; see the [Codex adapter README](harnesses/codex/README.md) for its native boundary. `plan --harness all` reports missing adapters, while an explicit unsupported target fails. `prune`, best-effort application, adoption of manual conflicts, and native field-level diffs are not implemented.
 
 ## Implement an adapter independently
 
@@ -39,6 +39,8 @@ Read the [adapter development guide](docs/adapter-development.md), then the targ
 | OpenCode | [Overview](harnesses/opencode/README.md) | [Spec](harnesses/opencode/SPEC.md) |
 | Hermes Agent | [Overview](harnesses/hermes-agent/README.md) | [Spec](harnesses/hermes-agent/SPEC.md) |
 | OpenClaw | [Overview](harnesses/openclaw/README.md) | [Spec](harnesses/openclaw/SPEC.md) |
+| GitHub Copilot CLI (candidate) | [Overview](harnesses/copilot/README.md) | [Spec](harnesses/copilot/SPEC.md) |
+| Cursor Agent CLI (blocked design) | [Overview](harnesses/cursor/README.md) | [Spec](harnesses/cursor/SPEC.md) |
 
 ## Configuration concept
 
@@ -48,8 +50,8 @@ secrets_file: secrets.yaml
 providers:
   - name: team-proxy
     alias: tp
-    type: anthropic
-    base_url: https://anthropic.example.invalid
+    type: openai-responses
+    base_url: https://responses.example.invalid/v1
     api_key: { secret: team_proxy }
     models:
       - { name: fast-model, role: simple }
@@ -57,25 +59,25 @@ providers:
       - { name: reasoning-model, role: complex }
 ```
 
-Replace placeholder endpoint/model IDs with your provider's values. This example selects an Anthropic protocol; other harnesses may require another protocol or explicit endpoint override. Three roles may point to the same upstream model. `name` is the display label; optional `id` specifies the exact provider API ID and defaults to `name`. Different providers can use the same label with different IDs; adapters convert native selector syntax without guessing equivalence. Additional metadata is required when a native harness needs it.
+Replace placeholder endpoint/model IDs with your provider's values. This example selects the OpenAI Responses protocol supported by the Codex adapter; other harnesses may require another protocol or explicit endpoint override. Three roles may point to the same upstream model. `name` is the display label; optional `id` specifies the exact provider API ID and defaults to `name`. Different providers can use the same label with different IDs; adapters convert native selector syntax without guessing equivalence. Additional metadata is required when a native harness needs it.
 
 The private `secrets.yaml` holds key values. Generated shell exports use namespaced variables; launchers map them to native variable names in each child process. Harnesses that require file-based keys receive private derived files.
 
-## Native workflow after an adapter is implemented
+## Native workflow
 
 ```sh
 harness-sync init
 harness-sync detect
 # Edit config.yaml and add API keys using a hidden prompt.
 harness-sync secrets set team_proxy
-harness-sync plan --harness claude-code
-harness-sync sync --harness claude-code
-harness-sync run claude-code --provider tp --role daily -- ...
+harness-sync plan --harness codex
+harness-sync sync --harness codex
+harness-sync run codex --provider tp --role daily -- ...
 ```
 
-There is no background watcher or `enabled` flag. Every generated `claude-tp` launch refreshes its provider configuration before selecting the daily model. `harness-sync run claude-code --provider tp --role complex -- ...` selects complex. See manual shell setup below if the configured bin directory is not on PATH.
+There is no background watcher or `enabled` flag. Every generated `codex-tp` launch refreshes its provider configuration before selecting the daily model. `harness-sync run codex --provider tp --role complex -- ...` selects complex. See manual shell setup below if the configured bin directory is not on PATH.
 
-The original `claude` command remains intact and cannot trigger sync on its own. Use `harness-sync run claude-code -- ...` to sync and launch native defaults, or run `sync` first. Native default files are updated only when `default.write: true` is set for that harness or `--write-defaults` is passed explicitly. Normal sync generates managed profiles and redacted default-change previews. Existing commands such as `claude-tp` are preserved and reported as collisions.
+The original `codex` command remains intact and cannot trigger sync on its own. Use `harness-sync run codex -- ...` to sync and launch native defaults, or run `sync` first. Native default files are updated only when `default.write: true` is set for that harness or `--write-defaults` is passed explicitly. Normal sync generates managed profiles. Existing commands such as `codex-tp` are preserved and reported as collisions.
 
 ## Manual shell setup
 
@@ -87,7 +89,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 For persistence, add that line once to `~/.zshrc` (Zsh) or `~/.bashrc` (interactive non-login Bash). Bash login shells read `~/.bash_profile` or another login profile instead; ensure it sources `~/.bashrc`, or place the line in the startup file your shell already uses. Adjust the path if `commands.bin_dir` differs.
 
-Managed commands such as `claude-tp` load their own credentials. **Sourcing the export file is optional**, needed for bare harness commands whose synced default configs reference its environment variables:
+Managed commands such as `codex-tp` load their own credentials. **Sourcing the export file is optional**, needed for bare harness commands whose synced default configs reference its environment variables:
 
 ```sh
 source "${XDG_CONFIG_HOME:-$HOME/.config}/harness-sync/generated/env.sh"
@@ -97,6 +99,6 @@ Run this after the file has been generated, or add it to your startup file if yo
 
 ## Implementation scope
 
-Framework development is authorized and implemented. Native adapter development remains separate, ready for other agents/sessions. The core uses Python 3.11+, Pydantic, ruamel.yaml and the standard-library CLI parser; it targets macOS/Linux. Native format dependencies will be added by adapters as needed.
+Framework development and the Codex adapter are implemented. Other native adapters remain separate; the Copilot and Cursor directories are documentation-only and are not registry entries. The core uses Python 3.11+, Pydantic, ruamel.yaml, tomlkit and the standard-library CLI parser; it targets macOS/Linux.
 
 Default writes remain an explicit runtime choice. The tool never modifies shell startup files. Current implementation details and limitations are in the adapter development guide.

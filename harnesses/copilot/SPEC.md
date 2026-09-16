@@ -2,7 +2,7 @@
 
 Status: **Native design pending implementation; shared framework ready.** Proposed adapter ID: `copilot`. Native command: `copilot`.
 
-The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against official GitHub documentation on 2026-09-15 (America/New_York); no installed release has been validated. This directory deliberately contains no manifest or adapter code, so the packaged registry does not yet advertise this harness.
+This is an additional candidate outside the currently approved eight-adapter v1 implementation set. The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission, but implementation still requires separate approval. Native facts below were checked against official GitHub documentation on 2026-09-15 (America/New_York); no installed release has been validated. This directory deliberately contains no manifest or adapter code, so the packaged registry does not advertise this harness.
 
 ## Native interface and evidence
 

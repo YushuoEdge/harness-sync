@@ -1,6 +1,6 @@
 # Implementing a harness adapter
 
-The shared framework is implemented. The eight native adapters are deliberately absent, so independent agents/sessions can implement them without duplicating the core. Start with the target directory's `SPEC.md`; it describes native behavior and version-verification gates.
+The shared framework and Codex adapter are implemented. The other seven approved v1 native adapters are deliberately absent, so they can be implemented without duplicating the core. GitHub Copilot CLI is a documentation-only candidate awaiting separate implementation approval; Cursor Agent CLI is a documentation-only blocked design. Start with the target directory's `SPEC.md`; it describes native behavior, scope and version-verification gates.
 
 ## Ownership and work boundary
 
@@ -20,7 +20,7 @@ harnesses/<harness-id>/
 
 Do not add native field names, paths, flags or protocol quirks to the CLI/core. Do not implement locks, backups, wrappers, shell export generation, or secret storage in an adapter. If a shared interface needs changing, propose it explicitly and update its contract tests; avoid silently forking a private framework.
 
-The registry discovers packaged `harnesses/*/adapter.json` manifests and imports an adjacent `adapter.py` only when present. The factory must return a subclass of `harness_sync.contracts.Adapter`. Configuration cannot name modules to import. No real adapter is registered today. The fake adapter in [tests/conftest.py](../tests/conftest.py) demonstrates the entire contract and is never packaged as a production adapter.
+The registry discovers packaged `harnesses/*/adapter.json` manifests and imports an adjacent `adapter.py` only when present. The factory must return a subclass of `harness_sync.contracts.Adapter`. Configuration cannot name modules to import. Codex is the only registered native implementation; manifests without `adapter.py` report `not-implemented`. Documentation-only directories without manifests, currently Copilot and Cursor, are not registry entries. The fake adapter in [tests/conftest.py](../tests/conftest.py) demonstrates the entire contract and is never packaged as a production adapter.
 
 ## Core modules
 

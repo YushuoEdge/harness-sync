@@ -2,6 +2,8 @@
 
 **Design documented; custom-provider support is blocked by the current public CLI contract.**
 
+This research-only design is outside the currently approved eight-adapter v1 implementation set and is not an implementation candidate while the blocker remains.
+
 Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC.md).
 
 | Item | Planned behavior |

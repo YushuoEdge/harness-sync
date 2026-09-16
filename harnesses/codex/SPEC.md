@@ -1,8 +1,8 @@
 # Codex adapter specification
 
-Status: **Native design pending implementation; shared framework ready.** Adapter ID: `codex`. Native command: `codex`.
+Status: **Implemented and locally verified with Codex CLI 0.154.0.** Adapter ID: `codex`. Native command: `codex`.
 
-The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
+The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York). Codex CLI 0.154.0 profile parsing was smoke-checked locally on 2026-09-15 without inference.
 
 ## Native interface and evidence
 
@@ -31,6 +31,6 @@ Every generated provider command uses the common pre-launch sync contract: refre
 
 Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
 
-## Planned directory ownership
+## Directory ownership
 
-When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+This directory contains `adapter.py`, a 0.154.0 native capability fixture and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.

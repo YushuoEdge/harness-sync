@@ -63,6 +63,7 @@ def detection_public(result: Detection) -> dict[str, Any]:
         "executable": str(result.executable) if result.executable else None,
         "version": result.version,
         "default_paths": [str(p) for p in result.default_paths],
+        "profile_roots": [str(p) for p in result.profile_roots],
         "capabilities": list(result.capabilities),
     }
 
@@ -272,6 +273,7 @@ class Engine:
                 or not (
                     any(path.is_relative_to(root) for root in roots)
                     or path in context.detection.profile_paths
+                    or path.parent in context.detection.profile_roots
                 )
             ):
                 raise ConflictError("Profile artifact escapes its declared scope")

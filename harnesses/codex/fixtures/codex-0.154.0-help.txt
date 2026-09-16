@@ -1,0 +1,4 @@
+Usage: codex [OPTIONS] [PROMPT]
+
+  -p, --profile <CONFIG_PROFILE_V2>
+          Layer $CODEX_HOME/<name>.config.toml on top of the base user config

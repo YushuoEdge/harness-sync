@@ -2,6 +2,8 @@
 
 **Native adapter pending; shared framework available.**
 
+This is an additional candidate outside the currently approved eight-adapter v1 implementation set. Its implementation requires separate approval.
+
 Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC.md).
 
 | Item | Planned behavior |
@@ -28,4 +30,4 @@ GitHub documents direct BYOK support for Anthropic and OpenAI Chat Completions-c
 
 ## Implementation boundary
 
-This directory is documentation-only. No adapter manifest, `adapter.py`, personal wrapper installation or native configuration change has been added. After this design is approved, implementation should follow the [adapter development guide](../../docs/adapter-development.md), add versioned fixtures and tests, and prove behavior against an installed release without using paid inference by default.
+This directory is documentation-only and is not advertised by the packaged registry. No adapter manifest, `adapter.py`, personal wrapper installation or native configuration change has been added. After this design is approved, implementation should follow the [adapter development guide](../../docs/adapter-development.md), add versioned fixtures and tests, and prove behavior against an installed release without using paid inference by default.
