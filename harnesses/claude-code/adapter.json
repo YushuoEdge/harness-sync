@@ -1,0 +1,5 @@
+{
+  "id": "claude-code",
+  "command": "claude",
+  "api_version": 1
+}

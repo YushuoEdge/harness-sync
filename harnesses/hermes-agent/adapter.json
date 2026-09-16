@@ -1,0 +1,5 @@
+{
+  "id": "hermes-agent",
+  "command": "hermes",
+  "api_version": 1
+}

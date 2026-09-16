@@ -1,12 +1,14 @@
 # Harness Sync Config — specification
 
-Status: **Draft for approval; no implementation authorized yet.**
+Status: **Shared framework implementation authorized and delivered; native adapters pending.**
+
+This document describes the full target design. The current framework subset and deliberate API refinements are documented in [adapter development](docs/adapter-development.md). In particular: native options are under typed `options` objects; plans currently show metadata rather than native content diffs; prune/best-effort/adopt-changes are pending. No real native support is claimed yet.
 
 ## 1. Purpose and scope
 
 One human-edited YAML configuration defines providers and three task roles per provider. One separate secrets file holds API keys. The tool translates these inputs into harness-specific profiles, provider-suffixed launch commands, and explicitly enabled default configuration updates.
 
-The proposed executable is `harness-sync` (no short alias installed automatically). Initial platform scope: macOS and Linux, with Bash and Zsh integration. Implementation proposal: Python 3.11+, packaged for `uv tool install` / `pipx`; Typer, Pydantic, ruamel.yaml, tomlkit, format-preserving JSON/JSONC/JSON5 editing. Dependency versions and JSON editing library will be selected and pinned during implementation. Native Windows, a GUI, protocol proxying, OAuth migration, and automatic task-complexity classification are outside v1.
+The proposed executable is `harness-sync` (no short alias installed automatically). Initial platform scope: macOS and Linux, with Bash and Zsh integration. Implementation proposal: Python 3.11+, packaged for `uv tool install` / `pipx`; standard-library argparse, Pydantic and ruamel.yaml in the core; tomlkit and format-preserving JSON/JSONC/JSON5 editing as native adapters require. Dependency versions and JSON editing library will be selected and pinned during implementation. Native Windows, a GUI, protocol proxying, OAuth migration, and automatic task-complexity classification are outside v1.
 
 All eight adapters are required for v1: Claude Code, Codex, Pi, DeepSeek Harness, Kimi Code, OpenCode, Hermes Agent, and OpenClaw. A draft adapter is not implemented support. Each adapter must pass its release gates before v1 can claim support; incompatible provider/harness pairs receive explicit diagnostics.
 
@@ -88,10 +90,10 @@ commands:
 - `models`: exactly three entries with roles `simple`, `daily`, `complex`, each once. `name` is a user-facing model label; optional `id` is the exact provider API model ID and defaults to `name`. Repeated IDs across roles are allowed. Ordering has no semantic meaning.
 - Optional model fields: `context_window`, `max_output_tokens` (positive integers; output cannot exceed context), `reasoning` (boolean), `reasoning_effort` (string), `input` (list of text/image). Missing metadata is omitted unless the target requires it; required missing metadata is a validation error, never fabricated.
 - Optional `headers`: map of literal non-secret strings or `{secret: ID}` references. Authentication headers must be declared as secret references. Auth mechanism conflicts are errors.
-- Optional `overrides.<harness-id>` on a provider or model: typed adapter-specific fields, including an alternative `base_url` or protocol `type` for a multi-protocol gateway and provider/model options. Override precedence is common fields, provider override, model override. Unsupported fields fail validation; overrides cannot modify safety, hooks, plugins, commands, or arbitrary destination paths.
+- Optional `overrides.<harness-id>` on a provider or model: typed adapter-specific fields, including an alternative `base_url` or protocol `type` for a multi-protocol gateway and native provider/model options under an `options` map. Override precedence is common fields, provider override, model override. Unsupported fields fail validation; overrides cannot modify safety, hooks, plugins, commands, or arbitrary destination paths.
 - Provider-level endpoint overrides inherit the secret only because the user explicitly declared the alternative endpoint. Neither discovery nor fallback may redirect a key to a guessed endpoint.
 - `harnesses`: optional adapter settings, not an enablement list. There is no `enabled` flag. `sync` without `--harness` targets all detected supported harnesses; `--harness` narrows this set. Managed launches target only their own harness/provider. `providers` omitted means all compatible configured providers; an explicit incompatible selection is an error. A harness with zero compatible providers is skipped with a reason. `commands.enabled` is also removed: sync creates missing selected wrappers by default; `sync --no-commands` suppresses wrapper creation/update for that invocation.
-- Adapter settings may specify `executable` and `config_path` explicitly. These override detection, are validated, and are visible in the plan. Adapter-specific settings such as a DeepSeek base profile or OpenClaw gateway port live in this block.
+- Adapter settings may specify `executable` and `config_path` explicitly. These override detection, are validated, and are visible in the plan. Adapter-specific settings such as a DeepSeek base profile or OpenClaw gateway port live under `options` in this block and use the adapter's strict options schema.
 - `default.write` defaults to false. `default.provider` is required whenever a default update is requested; no selection based on list order. `default.role` defaults to daily. Multi-provider adapters register the selected catalog and set one active default; single-provider adapters write only the chosen provider.
 - Namespaced model aliases are `hs-<provider>-<role>` where native aliases exist. Otherwise the launcher maps the role to the exact model ID.
 
@@ -124,7 +126,7 @@ All three roles are available through `harness-sync run HARNESS --provider ALIAS
 
 ## 4. Proposed commands
 
-These are the intended CLI contract, not runnable commands in this documentation-only repository.
+These are the target CLI commands. See README for the implemented framework subset; native operations require a completed adapter.
 
 ```sh
 harness-sync init
@@ -254,7 +256,7 @@ harnesses/
   opencode/{README.md,SPEC.md}
   hermes-agent/{README.md,SPEC.md}
   openclaw/{README.md,SPEC.md}
-# After approval only:
+# Shared framework exists; native implementations are separate:
 # src/harness_sync/ — CLI, schema, secrets, planner, transactions, launcher
 # harnesses/<id>/adapter.py, fixtures/, tests/ — all harness-specific behavior
 # tests/ — shared contract, filesystem, subprocess and lifecycle tests
@@ -263,20 +265,21 @@ harnesses/
 
 The adapter registry loads the eight bundled modules from their own directories; no downloaded plugins or config-selected Python imports. The shared core owns filesystem writes, secret resolution, locking, backups, and redaction.
 
-Adapter contract:
+Adapter contract (exact types in `src/harness_sync/contracts.py`):
 
-- `detect(context) -> Detection`: executable, version, paths, supported feature set.
-- `validate(provider, models, detection) -> diagnostics`: protocol and native field requirements.
-- `render_profile(...) -> ArtifactPlan`: native files, secret destinations/references, owned fields, profile placements.
-- `plan_default(existing, ...) -> PatchPlan`: field-level edits and conflict metadata.
-- `launch(profile, role, argv) -> LaunchPlan`: original executable, argv, child environment, state location; secret values are carried privately and never serialized into normal plan output.
-- `verify(staged, detection) -> diagnostics`: offline native syntax/schema verification; optional native probe in isolated fixtures.
+- `detect(DetectionContext) -> Detection`: tested capabilities, executable and allowed native paths.
+- `validate(Provider, RenderContext) -> None`: protocol, metadata and adapter-owned options schemas.
+- `profiles(Provider, RenderContext) -> tuple[Artifact, ...]`: deferred native render/verify functions.
+- `defaults(providers, selected, role, context) -> tuple[Artifact, ...]`: authorized structural native merges.
+- `launch(provider, role, arguments, context, secrets) -> LaunchSpec`: argv plus private environment overlay.
+
+Core snapshot reads and protected baselines are supplied through `RenderContext`; each `Artifact` has its own native verifier. See the development guide for implementation requirements.
 
 No adapter writes files directly or invokes a shell to interpolate config values. Each declares field ownership, protocol support, minimum tested capabilities, precedence limits and reload behavior.
 
 ## 11. Acceptance criteria and implementation order
 
-After approval:
+Framework approved; native adapter work may be implemented independently:
 
 1. Implement canonical schema, secrets store, detector/state, pure planner and transaction engine.
 2. Implement each adapter in its directory against pinned source/version fixtures; review the local spec before its code. No placeholder adapter counts as complete.
@@ -297,8 +300,8 @@ Required tests include:
 - Isolated native smoke checks on every claimed supported version; no paid inference unless explicitly enabled with test credentials.
 - Documentation includes all eight adapters, source links, known limitations and verified-version evidence.
 
-## 12. Approval checkpoint
+## 12. Implementation boundary
 
 This draft proposes Python, the YAML schema above, three named roles, private API-key storage, profile-only writes by default, documented manual shell setup, and all eight adapters as v1 requirements. Approving implementation does not itself enable native default writes on this machine; that remains a separate runtime setting or command choice.
 
-Review this specification, the [compatibility matrix](docs/compatibility.md), and the linked adapter specifications before implementation. No application code, wrappers, credentials, or native harness configuration are created during this specification phase.
+The user authorized the shared framework. Harness-specific implementations belong to subsequent adapter tasks. Review the [compatibility matrix](docs/compatibility.md) and each adapter spec before its implementation. Development and tests do not install personal wrappers or change real native harness configuration.
