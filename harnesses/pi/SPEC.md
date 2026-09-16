@@ -25,6 +25,12 @@ Merge owned provider entries in `models.json`, and selected default provider/mod
 
 Test API mapping, duplicate model IDs, same-name binary rejection, required model metadata, environment-key resolution, role selection, isolation and preservation of existing authentication. Test missing credentials and keyless endpoints against a local stub without inventing a real key. `--models` cycling is optional native behavior, not automatic complexity routing. Existing processes may retain provider catalogs or credentials until restarted.
 
+## Command-triggered sync and model identity
+
+Every generated provider command uses the common pre-launch sync contract: refresh this harness/provider, apply native defaults only when independently authorized, then launch. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
+
+Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
+
 ## Planned directory ownership
 
 After approval, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.

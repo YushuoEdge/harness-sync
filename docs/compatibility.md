@@ -55,5 +55,11 @@ The draft proposes:
 - Explicit role selection where the harness lacks native three-tier routing.
 - Profile-only synchronization by default, with independent authorization for default writes.
 - One private source of API keys, plus necessary generated copies.
-- Explicit shell/service setup and conservative handling of existing commands.
+- Command-triggered synchronization, documented manual shell setup and conservative handling of existing commands.
 - All eight adapters required before claiming v1 support; no placeholder adapters counted as finished.
+
+## Revised launch and model contract (2026-09-15)
+
+No watcher, daemon, polling or `enabled` settings. Sync targets detected harnesses (or explicit `--harness` selections); each managed launch refreshes its own configuration first. Original bare commands remain intact and require a prior sync or the explicit managed launcher.
+
+`name` is a label; `id` is provider-local and defaults to `name`. Adapters consume the resolved ID and translate only native configuration/selector syntax. A per-harness `id` override supports an explicitly different gateway route. No universal model-name translation catalog is maintained. See the overall spec's model identity section for primary-source evidence and required request-level verification.

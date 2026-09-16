@@ -18,10 +18,10 @@ Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC
 ```sh
 harness-sync plan --harness hermes-agent
 harness-sync sync --harness hermes-agent
-harness-sync watch --harness hermes-agent
+harness-sync run hermes-agent --provider <alias> --role daily -- ...
 ```
 
-These examples generate/manage profiles; ordinary commands remain available. See the spec for exact native paths, credential strategy, shared versus isolated session behavior, default merge fields, and release gates. Protocol support depends on the installed native version and configured endpoint. No key or real native configuration belongs in this source directory.
+Each managed launch refreshes its selected configuration before starting the harness. No background watcher or enablement flag is needed. These examples generate/manage profiles; ordinary commands remain available. See the spec for exact native paths, credential strategy, shared versus isolated session behavior, default merge fields, and release gates. Protocol support depends on the installed native version and configured endpoint. No key or real native configuration belongs in this source directory.
 
 ## Implementation boundary
 

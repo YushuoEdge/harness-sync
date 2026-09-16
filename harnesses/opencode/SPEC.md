@@ -25,6 +25,12 @@ Merge owned provider catalog entries and selected `model`/`small_model` in the n
 
 Pin and test the SDK mapping for each supported protocol (Anthropic, OpenAI Chat, Responses, Google). A package name alone does not prove which wire API an SDK uses. Test exact request paths with local stubs and reject unverified mappings. Test project/inline/CLI precedence, duplicate IDs, small-model selection, preserved native auth and invalid JSONC. Never install arbitrary SDKs from canonical overrides; use a fixed adapter allowlist. Exposing three roles does not restrict every internal auxiliary model unless native configuration supports it.
 
+## Command-triggered sync and model identity
+
+Every generated provider command uses the common pre-launch sync contract: refresh this harness/provider, apply native defaults only when independently authorized, then launch. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
+
+Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
+
 ## Planned directory ownership
 
 After approval, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.

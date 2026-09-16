@@ -25,6 +25,12 @@ Merge owned `providers`/`models` entries and `default_model` in the detected nat
 
 Test current and any explicitly supported legacy path/flag combinations, mandatory context sizes, literal-key rotation, role aliases and credential precedence. Assert no guessed `--config-file` flag is emitted for releases that lack it. Missing metadata is a config error, not a synthesized context limit. Config editing is separate from changing active sessions; new launches are the guaranteed activation boundary.
 
+## Command-triggered sync and model identity
+
+Every generated provider command uses the common pre-launch sync contract: refresh this harness/provider, apply native defaults only when independently authorized, then launch. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
+
+Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
+
 ## Planned directory ownership
 
 After approval, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.

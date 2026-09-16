@@ -25,6 +25,12 @@ Merge namespaced `model_providers` entries and chosen top-level `model`, `model_
 
 Test profile resolution against the detected release, no default changes during installation, CLI precedence, all three roles, key rotation and two providers. Capture versioned native parsing fixtures; documentation alone does not qualify a version as tested. Do not promise that custom models appear in every Codex model picker, or that Desktop/IDE clients honor CLI profiles; v1 scope is the local CLI. Unknown profile format fails before writing.
 
+## Command-triggered sync and model identity
+
+Every generated provider command uses the common pre-launch sync contract: refresh this harness/provider, apply native defaults only when independently authorized, then launch. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
+
+Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
+
 ## Planned directory ownership
 
 After approval, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
