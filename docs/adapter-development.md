@@ -1,6 +1,6 @@
 # Implementing a harness adapter
 
-The shared framework and Codex adapter are implemented. The other seven approved v1 native adapters are deliberately absent, so they can be implemented without duplicating the core. GitHub Copilot CLI is a documentation-only candidate awaiting separate implementation approval; Cursor Agent CLI is a documentation-only blocked design. Start with the target directory's `SPEC.md`; it describes native behavior, scope and version-verification gates.
+The shared framework and Codex adapter are implemented. The other seven approved v1 native adapters are deliberately absent, so they can be implemented without duplicating the core. GitHub Copilot CLI is a documentation-only candidate with a revised provider-registry design awaiting separate implementation approval; Cursor Agent CLI is a documentation-only blocked design. Start with the target directory's `SPEC.md`; it describes native behavior, scope and version-verification gates.
 
 ## Ownership and work boundary
 
