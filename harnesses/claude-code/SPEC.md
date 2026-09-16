@@ -26,6 +26,12 @@ Merge only `model` and managed provider/tier entries in `env`; native settings r
 
 Test tier mapping, native CLI/env precedence, two simultaneous keys/endpoints, existing OAuth, settings collisions, managed restrictions, and unchanged default-file hashes after profile launch. Verify native auth selection in isolated fixtures before enabling wrappers. File sync takes effect for new launches; do not promise active-session provider switching. No arbitrary protocol translation or automatic task classification beyond Claude's native behavior.
 
+## Command-triggered sync and model identity
+
+Every generated provider command uses the common pre-launch sync contract: refresh this harness/provider, apply native defaults only when independently authorized, then launch. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
+
+Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
+
 ## Planned directory ownership
 
 After approval, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.

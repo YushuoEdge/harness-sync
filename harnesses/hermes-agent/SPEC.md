@@ -26,6 +26,12 @@ Merge only owned model/provider fields into native YAML and corresponding key en
 
 Capture current custom-provider schema, key-variable binding and CLI selection behavior before enabling the adapter. Test YAML interpolation and native dotenv parsing independently from shell export parsing. Verify two homes receive different keys despite a stale parent environment; test all role launches and unchanged global files. Unknown transport fields fail validation. Do not restart a gateway or synchronize its bot/channel identity, schedules or memories; existing long-lived processes may need a user-initiated restart.
 
+## Command-triggered sync and model identity
+
+Every generated provider command uses the common pre-launch sync contract: refresh this harness/provider, apply native defaults only when independently authorized, then launch. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
+
+Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
+
 ## Planned directory ownership
 
 After approval, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.

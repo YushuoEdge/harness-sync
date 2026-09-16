@@ -25,6 +25,12 @@ Merge only managed provider entries, aliases and selected primary model into nat
 
 Verify config schema, key-reference syntax, alias/default paths and role activation against pinned native fixtures. Test JSON5 preservation, duplicate models, config/state precedence, credential isolation and unchanged native default settings. Concurrent gateway profiles require explicit distinct ports and matching client config; report conflicts and never start/stop services as a sync side effect. Updating files cannot guarantee that a connected gateway changes model immediately. The wrapper runs the CLI; it does not automatically provision a functioning gateway or messaging integration.
 
+## Command-triggered sync and model identity
+
+Every generated provider command uses the common pre-launch sync contract: refresh this harness/provider, apply native defaults only when independently authorized, then launch. There is no background watcher or harness enablement flag. A bare original executable remains unchanged and does not invoke the sync tool.
+
+Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
+
 ## Planned directory ownership
 
 After approval, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
