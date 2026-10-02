@@ -1,6 +1,6 @@
 # OpenClaw adapter specification
 
-Status: **Implemented for OpenClaw 2026.6.11 / e085fa1.** Adapter ID: `openclaw`. Native command: `openclaw`.
+Status: **Implemented for OpenClaw 2026.9.7 / c074824.** Adapter ID: `openclaw`. Native command: `openclaw`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); The implementation was additionally checked against the installed pinned release on 2026-10-02. The boundary below supersedes earlier proposals.
 
@@ -38,7 +38,7 @@ When implemented, this directory will contain `adapter.py`, versioned native fix
 ## Implemented boundary
 
 Native protocol names, environment SecretRefs, model catalog/alias paths and the
-agent model override were verified on 2026.6.11 / e085fa1. Profiles are secret-free;
+agent model override were verified on 2026.9.7 / c074824. Profiles are secret-free;
 explicitly authorized defaults contain mode-0600 literal credentials for bare
 CLI use. Default merges preserve fallback order, gateway/channels/auth settings
 and unrelated entries. Includes and unsupported concrete JSON5 syntax fail closed.
@@ -58,3 +58,11 @@ repeated exact IDs are supported; a repeated ID has one native alias (first role
 Native stub checks cover all four protocols across all roles, native config
 validation and authenticated foreground gateway health, without paid inference.
 The repeatable smoke script uses temporary state and fake credentials.
+
+## 2026-10-02 release validation
+
+Updated the installed OpenClaw to **2026.9.7 / c074824** and its required Node runtime to
+**24.16.0** (the previous 22.23.1 binary was preserved). Refreshed version and agent-help fixtures.
+All four protocols and all roles passed localhost request routing, fake-key rotation and native
+config validation. An isolated foreground gateway passed authenticated health checks without
+changing its managed config. Unit tests passed. Native default/auth/channel files were untouched.

@@ -1,6 +1,6 @@
 # OpenClaw adapter
 
-**Implemented for OpenClaw 2026.6.11 / e085fa1.** Other releases fail closed.
+**Implemented for OpenClaw 2026.9.7 / c074824.** Other releases fail closed.
 
 Supports Anthropic Messages, OpenAI Chat, OpenAI Responses and Google GenAI.
 Each provider/role has a stable private state directory, workspace and
@@ -80,3 +80,11 @@ uv run python harnesses/openclaw/tests/smoke_native.py --executable /opt/homebre
 See the [adapter spec](SPEC.md), [CLI reference](https://docs.openclaw.ai/cli),
 [custom-provider documentation](https://docs.openclaw.ai/gateway/config-tools/custom-providers)
 and [overall specification](../../SPEC.md).
+
+## 2026-10-02 release validation
+
+Updated the installed OpenClaw to **2026.9.7 / c074824** and its required Node runtime to
+**24.16.0** (the previous 22.23.1 binary was preserved). Refreshed version and agent-help fixtures.
+All four protocols and all roles passed localhost request routing, fake-key rotation and native
+config validation. An isolated foreground gateway passed authenticated health checks without
+changing its managed config. Unit tests passed. Native default/auth/channel files were untouched.
