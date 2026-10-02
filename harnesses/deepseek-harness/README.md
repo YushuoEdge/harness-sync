@@ -1,28 +1,36 @@
 # DeepSeek Harness adapter
 
-**Native adapter pending; shared framework available.**
+Implemented for **dsh 0.1.2-rc.1** and its bundled profiles. Protocols: OpenAI Chat,
+OpenAI Responses and Anthropic Messages. Google is not supported by this native build.
 
-Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC.md).
-
-| Item | Planned behavior |
-| --- | --- |
-| Adapter ID | `deepseek-harness` |
-| Native executable | `dsh` |
-| Provider command | `dsh-<alias>` |
-| Role selection | `harness-sync run deepseek-harness --provider <alias> --role simple\|daily\|complex -- ...` |
-| Default files | Written only with explicit runtime authorization |
-| Verified releases | None yet; versioned native tests required |
-
-## Proposed usage after implementation
-
-```sh
-harness-sync plan --harness deepseek-harness
-harness-sync sync --harness deepseek-harness
-harness-sync run deepseek-harness --provider <alias> --role daily -- ...
+```yaml
+harnesses:
+  deepseek-harness:
+    options: {base_profile: headless}
 ```
 
-Each managed launch refreshes its selected configuration before starting the harness. No background watcher or enablement flag is needed. After this adapter is implemented, these examples generate/manage profiles; ordinary commands remain available. See the spec for exact native paths, credential strategy, shared versus isolated session behavior, default merge fields, and release gates. Protocol support depends on the installed native version and configured endpoint. No key or real native configuration belongs in this source directory.
+```sh
+harness-sync sync --harness deepseek-harness
+harness-sync run deepseek-harness --provider <alias> --role complex -- "your task"
+```
 
-## Implementation boundary
+The default template is `web`; managed web launches require an explicit `--port`.
+`headless`, `sdk` and `acp` use their native argument grammar. Plugin administration uses the
+original `dsh` command. Sync/detection do not start servers, install dependencies or run YAML code.
 
-This directory owns the native adapter and its tests. Follow the [adapter development guide](../../docs/adapter-development.md); its API is implemented in the shared core. Add `adapter.py` exporting `create_adapter()` when ready. This directory currently contains only documentation and its adapter manifest. No native implementation, personal wrapper installation or native configuration changes have been performed. Final installation instructions, supported-version ranges and smoke-test evidence will be added when implemented.
+Each provider/role has a persistent isolated `DSH_HOME`. The tool owns only its settings, bundle
+manifest and empty profile patch; sessions and other runtime state persist. Native bundle resolution
+uses the installation. Settings explicitly select the role, including the saved-selection namespace,
+so roles cannot overwrite one another's active defaults. Auth, memories and plugins are not copied.
+Fresh namespaced child credentials take precedence over native stored credentials and dotenv.
+Custom headers may create private secret-bearing settings. Model reasoning metadata is rejected
+until an explicit effort-map interface is added; supported capacity/input metadata passes through.
+
+Authorized native-default writes merge settings namespaces, preserving YAML comments, unrelated
+providers and fields. Executable YAML tags in settings are rejected as data; native bundle tags are
+never evaluated by the sync tool. Unknown releases/schema capabilities fail closed.
+
+Version/help and composed-bundle fixtures are included. On 2026-10-01 localhost headless checks
+verified all three protocols and roles, exact upstream IDs and fake keys, without dependency
+installation or paid inference. See [spec](SPEC.md) and
+[native CLI reference](https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/cli/reference/README.md).
