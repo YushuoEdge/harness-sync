@@ -1,6 +1,6 @@
 # Kimi Code adapter specification
 
-Status: **Native design pending implementation; shared framework ready.** Adapter ID: `kimi-code`. Native command: `kimi`.
+Status: **Implemented for legacy Kimi CLI 1.49.0; newer home format remains unverified.** Adapter ID: `kimi-code`. Native command: `kimi`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -34,3 +34,11 @@ Consume the core's resolved provider-local model `id` (falling back to `name`), 
 ## Planned directory ownership
 
 When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+
+## Implemented release boundary
+
+The supported 1.49.0 mapping uses `KIMI_SHARE_DIR`, `~/.kimi/config.toml`, `--config-file`, and
+protocol types `anthropic`, `openai_legacy`, `openai_responses`, `google_genai`. It does not migrate
+to `~/.kimi-code`. All transports and roles passed localhost checks on 2026-10-01.
+Output limits and reasoning effort are rejected; an optional `reserved_context_size` setting
+permits explicitly budgeting small model windows. Unknown native versions fail closed.
