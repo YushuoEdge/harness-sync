@@ -1,8 +1,8 @@
 # Qoder CLI adapter specification
 
-Status: **Selected harness; design only, blocked on noninteractive BYOK provisioning.** Proposed adapter ID: `qoder`. Native command: `qoder`.
+Status: **Selected harness; design only, blocked on noninteractive BYOK provisioning.** Proposed adapter ID: `qoder`. Native command: `qodercli` (the installed distribution).
 
-Selection adds a documentation target outside the original eight-adapter v1 set. It does not authorize native implementation or default writes. Official sources were checked on 2026-10-01 (America/New_York). No installed release was validated and no manifest is included.
+Selection adds a documentation target outside the original eight-adapter v1 set. Implementation was authorized on 2026-10-02; native default writes remain unauthorized. Official sources were checked on 2026-10-01 (America/New_York). Qoder CLI was updated from 0.1.44 to 1.1.65 on 2026-10-02; isolated version/help probes are captured in `fixtures/`. No manifest is included because provisioning remains blocked.
 
 ## Native interface and evidence
 
@@ -40,3 +40,13 @@ No native default changes are proposed for this introduction. A future adapter m
 3. Verify credential precedence, key rotation, inherited environment, role selection, project overrides, session resume and subagent routing.
 4. Prove concurrent provider isolation, state preservation, idempotence, rollback and no native default writes during normal sync.
 5. Obtain implementation approval, then add the manifest, adapter and native tests. Recheck official sources before advertising support.
+
+## 2026-10-02 installation and compatibility check
+
+The local `qodercli` was updated to **1.1.65** with its native `update` command.
+Isolated `QODER_CONFIG_DIR` probes confirm model selection, settings overlays and config-root
+flags, but no provider import/provisioning command. The [current official BYOK guide](https://docs.qoder.com/cli/custom-models)
+still requires the interactive Custom wizard and explicitly warns against manual BYOK entries
+in `settings.json`. Implementation approval does not supply the missing native interface.
+This target remains documentation-only: no guessed credential schema or nonfunctional adapter
+is advertised. No account login, credential database edit or native-default write was performed.
