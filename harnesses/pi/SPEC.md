@@ -1,6 +1,6 @@
 # Pi adapter specification
 
-Status: **Native design pending implementation; shared framework ready.** Adapter ID: `pi`. Native command: `pi`.
+Status: **Implemented for Pi coding agent 0.85.1.** Adapter ID: `pi`. Native command: `pi`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -34,3 +34,11 @@ Consume the core's resolved provider-local model `id` (falling back to `name`), 
 ## Planned directory ownership
 
 When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+
+## Implemented release boundary
+
+Pi 0.85.1 uses `$HS_<SECRET>` interpolation, not bare environment names. All four transports and
+three roles were verified against a localhost stub on 2026-10-01. Stored managed-provider auth
+causes a conflict; extensions and provider/model/key flags are rejected during managed launch.
+Native defaults retain unrelated providers/auth. Keyless endpoints require explicit real key
+references; the adapter never synthesizes a dummy key.

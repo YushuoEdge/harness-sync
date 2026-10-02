@@ -1,28 +1,27 @@
 # Pi adapter
 
-**Native adapter pending; shared framework available.**
-
-Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC.md).
-
-| Item | Planned behavior |
-| --- | --- |
-| Adapter ID | `pi` |
-| Native executable | `pi` |
-| Provider command | `pi-<alias>` |
-| Role selection | `harness-sync run pi --provider <alias> --role simple\|daily\|complex -- ...` |
-| Default files | Written only with explicit runtime authorization |
-| Verified releases | None yet; versioned native tests required |
-
-## Proposed usage after implementation
+Implemented for **Pi coding agent 0.85.1**. Other versions and unrelated `pi` executables fail closed.
+Supports Anthropic Messages, OpenAI Chat, OpenAI Responses and Google Generative AI.
 
 ```sh
-harness-sync plan --harness pi
 harness-sync sync --harness pi
-harness-sync run pi --provider <alias> --role daily -- ...
+harness-sync run pi --provider <alias> --role complex -- -p "your prompt"
 ```
 
-Each managed launch refreshes its selected configuration before starting the harness. No background watcher or enablement flag is needed. After this adapter is implemented, these examples generate/manage profiles; ordinary commands remain available. See the spec for exact native paths, credential strategy, shared versus isolated session behavior, default merge fields, and release gates. Protocol support depends on the installed native version and configured endpoint. No key or real native configuration belongs in this source directory.
+Profiles manage `models.json` and `settings.json` in a stable, isolated `PI_CODING_AGENT_DIR`.
+Sessions persist there; personal sessions, skills, extensions and OAuth are not copied. Launch
+pins provider and exact model, disables extensions that could replace routing, and loads fresh
+namespaced credentials. Stored auth for the managed provider is rejected because Pi gives it
+precedence over the catalog key. Extra provider/model/key and extension flags are rejected.
 
-## Implementation boundary
+Model metadata is passed when supplied; omitted limits retain native defaults. Repeated IDs are
+deduplicated and conflicting metadata fails. Custom headers support escaped static values and
+secret environment references. Keyless auth is rejected; no dummy credentials are invented.
+Default writes merge only managed catalogs/default selection and preserve unrelated providers
+and auth stores. Bare Pi requires the generated environment exports for managed default keys.
 
-This directory owns the native adapter and its tests. Follow the [adapter development guide](../../docs/adapter-development.md); its API is implemented in the shared core. Add `adapter.py` exporting `create_adapter()` when ready. This directory currently contains only documentation and its adapter manifest. No native implementation, personal wrapper installation or native configuration changes have been performed. Final installation instructions, supported-version ranges and smoke-test evidence will be added when implemented.
+Version/help fixtures, native-source review and tests verify the schema and protection rules.
+On 2026-10-01 a localhost request stub verified all four protocols and all three roles with exact
+IDs and fake credentials. Anthropic base URLs normally omit `/v1` because its SDK appends it;
+Chat/Responses endpoints normally include `/v1`. Google appends `models/<id>:streamGenerateContent`.
+See [spec](SPEC.md) and [native custom-model documentation](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/models.md).
