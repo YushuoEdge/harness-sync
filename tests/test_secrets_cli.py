@@ -68,9 +68,8 @@ def test_installed_cli_detect_without_native_execution(tmp_path):
     assert result.returncode == 0, result.stderr
     detections = json.loads(result.stdout)
     assert len(detections) == 8
-    assert detections["codex"]["status"] == "not-found"
-    assert all(
-        detection["status"] == "not-implemented"
-        for name, detection in detections.items()
-        if name != "codex"
-    )
+    from harness_sync.registry import Registry
+
+    implemented = Registry.bundled().adapters
+    for name, detection in detections.items():
+        assert detection["status"] == ("not-found" if name in implemented else "not-implemented")

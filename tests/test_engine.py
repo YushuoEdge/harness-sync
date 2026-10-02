@@ -160,21 +160,22 @@ def test_symlink_output_rejected(project):
     assert target.read_bytes() == b"do not touch"
 
 
-def test_bundled_slots_report_implementation_status(project):
+def test_bundled_slots_report_implementation_status(project, monkeypatch):
     base, _, _ = project
     registry = Registry.bundled()
     assert len(registry.catalog) == 8
-    assert set(registry.adapters) == {"codex"}
+    assert "codex" in registry.adapters
+    # Exercise discovery without launching any user's installed harness.
+    monkeypatch.setenv("PATH", "")
     engine = Engine(base.paths, registry)
     detections = engine.detect()
-    assert detections["codex"].status != "not-implemented"
-    assert all(
-        detection.status == "not-implemented"
-        for name, detection in detections.items()
-        if name != "codex"
-    )
-    with pytest.raises(UnsupportedError):
-        engine.sync(Selection(("pi",)))
+    for name, detection in detections.items():
+        expected = "not-found" if name in registry.adapters else "not-implemented"
+        assert detection.status == expected
+    pending = next((name for name in registry.catalog if name not in registry.adapters), None)
+    if pending:
+        with pytest.raises(UnsupportedError):
+            engine.sync(Selection((pending,)))
 
 
 def test_wrapper_quoting_and_forwarding(project):
