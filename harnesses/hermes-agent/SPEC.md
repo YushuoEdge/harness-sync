@@ -1,8 +1,8 @@
 # Hermes Agent adapter specification
 
-Status: **Implemented for v0.21.0, upstream 245e4800.** Adapter ID: `hermes-agent`. Native command: `hermes`.
+Status: **Implemented for v0.21.5, upstream 5bba024d.** Adapter ID: `hermes-agent`. Native command: `hermes`.
 
-The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
+The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. The installed source release and localhost routing were verified on 2026-10-02 (America/New_York).
 
 ## Native interface and evidence
 
@@ -32,14 +32,27 @@ Every generated provider command uses the common pre-launch sync contract: refre
 
 Consume the core's resolved provider-local model `id` (falling back to `name`), never infer an ID from the display label. Native role/model aliases are local selectors and must resolve to that exact upstream ID. Test two providers using the same label but different API IDs, explicit per-harness ID overrides, slash-containing IDs, repeated IDs and unsupported remapping. Model-ID conversion must not change endpoint or credentials.
 
-## Planned directory ownership
+## Directory ownership
 
-When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+This directory contains `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
 
 ## Implemented release boundary
 
 The verified native provider map uses `providers.hs-<name>`, `key_env`, `transport` and per-model
 metadata; explicit selection uses `custom:hs-<name>`. Chat, Responses and Anthropic passed localhost
-checks for every role on 2026-10-01. Persistent per-role homes prevent concurrent selection races.
+checks for every role on 2026-10-02. Persistent per-role homes prevent concurrent selection races.
 Dotenv credentials containing interpolation syntax are rejected; known routing/config bypass
 flags fail closed. Native defaults merge YAML and dotenv together; no gateway restart is implied.
+
+Source installations now launch from committed PM dependency generations. Detection first probes
+the original launcher in a temporary home with lazy installs disabled. If its help probe requires
+an isolated dependency install, resolve the source root from native version output and read only
+`installs/<sha256-source-path-prefix>/facts.json` in the configured or standard dependency home.
+Accept an executable Python only inside that installation's `environments` tree. Use the source
+CLI entry point under isolated Python, then recheck version, revision and help. Do not resolve the
+venv Python symlink away: it supplies the installed SDK search path. Clear inherited activation,
+runtime and Python-path variables and disable lazy installs for managed launches. Missing SDK
+extras require an explicit native `hermes pm install --extra <name>` outside sync; this machine's
+Anthropic extra was installed during the authorized harness update. No accounts or user secrets
+are copied from the dependency home. HTTP error stubs verify primary request routing, not complete
+inference, delegation, gateway or messaging behavior.

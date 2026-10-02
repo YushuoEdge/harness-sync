@@ -1,0 +1,5 @@
+Hermes Agent v0.21.5+5635.g5bba024.dirty (2026.9.24) · upstream 5bba024d
+Install directory: /Users/yushuo/.hermes/hermes-agent
+Install method: git
+Python: 3.14.7
+OpenAI SDK: 2.24.0
