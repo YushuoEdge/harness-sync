@@ -1,6 +1,6 @@
 # Claude Code adapter specification
 
-Status: **Implemented for Claude Code 2.1.278.** Adapter ID: `claude-code`. Native command: `claude`.
+Status: **Implemented for Claude Code 2.1.287.** Adapter ID: `claude-code`. Native command: `claude`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -42,3 +42,11 @@ The overlay carries literal credentials in private role files so project environ
 replace the selected key/endpoint. It disables inherited token/provider toggles and key helpers.
 Custom headers, keyless auth and model effort are rejected. Native localhost routing was verified
 on 2026-10-01 with synthetic credentials; unknown versions fail closed.
+
+## 2026-10-02 release validation
+
+Updated the installed harness to **2.1.287** and refreshed the pinned version/help fixtures.
+All supported protocols and all three roles passed localhost error-response routing checks
+with slash-containing model IDs and fake API keys. These checks prove endpoint, outbound model
+ID and credential routing; they do not exercise paid inference. Adapter unit tests passed.
+Native user defaults and authentication files were untouched.
