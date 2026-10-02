@@ -14,7 +14,7 @@ Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC
 | Role selection | Native `--model` exists, but does not configure a canonical provider endpoint/key |
 | Native configuration | `~/.cursor/cli-config.json` or `CURSOR_CONFIG_DIR` |
 | Default files | No writes proposed |
-| Verified releases | None; no installed release or documented CLI BYOK interface is available |
+| Inspected release | `2026.10.01-e373342`; updated and help/version checked on 2026-10-02; no supported CLI BYOK mapping |
 
 ## Current compatibility conclusion
 
@@ -25,3 +25,10 @@ Cursor's desktop editor separately documents BYOK setup in its Models settings U
 ## Implementation boundary
 
 This directory is documentation-only. No adapter manifest, `adapter.py`, registry entry, wrapper installation or Cursor configuration change has been added. Do not implement the adapter until Cursor publishes a stable noninteractive custom-provider interface, or the overall schema is separately expanded and approved to model Cursor-hosted service accounts. Re-check the linked official documentation before implementation because the CLI is actively evolving.
+
+The native `agent update` moved this installation from `2026.07.01-41b2de7` to
+`2026.10.01-e373342`. Sanitized help/version fixtures were captured in a temporary config directory.
+The current [configuration schema](https://cursor.com/docs/cli/reference/configuration) and
+[parameter reference](https://cursor.com/docs/cli/reference/parameters) were rechecked on 2026-10-02;
+they still do not specify a canonical custom provider configuration interface. No inference or
+account login was performed.
