@@ -1,4 +1,6 @@
+import hashlib
 import importlib
+import json
 import sys
 from pathlib import Path
 
@@ -127,7 +129,7 @@ def test_version_revision_fixture(monkeypatch):
     help_text = (fixture / f"hermes-{native.VERSION}-help.txt").read_text()
     for text, expected in [
         (version, "installed"),
-        (version.replace(native.REVISION, "ffffffff"), "unsupported-version"),
+        (version.replace(native.REVISION[:7], "fffffff"), "unsupported-version"),
     ]:
         values = iter([ProbeResult(0, text, ""), ProbeResult(0, help_text, "")])
         monkeypatch.setattr(native, "probe", lambda *a, values=values: next(values))
@@ -161,3 +163,49 @@ def test_engine_private_profiles_rotation_and_default_protection(monkeypatch, tm
     replace(tmp_path / "secrets.yaml", yaml_bytes({"version": 1, "keys": {"one": "rotated-key"}}))
     engine.sync(selection)
     assert all(b"rotated-key" in x.read_bytes() for x in files if x.name == ".env")
+
+
+def test_committed_source_runtime_and_launch(monkeypatch, tmp_path):
+    from dataclasses import replace
+
+    source = tmp_path / "source checkout"
+    source.mkdir()
+    home = tmp_path / ".hermes"
+    identity = hashlib.sha256(str(source.resolve()).encode()).hexdigest()[:16]
+    state = home / "installs" / identity
+    venv = state / "environments" / "generation" / "venv"
+    python = venv / "bin/python3"
+    python.parent.mkdir(parents=True)
+    python.write_text("#!/bin/sh\n")
+    python.chmod(0o700)
+    facts = state / "facts.json"
+    facts.write_text(json.dumps({"packages": {"venv": {"environment": str(venv)}}}))
+    text = (
+        f"Hermes Agent v{native.VERSION}+5635.g{native.REVISION[:7]}\nInstall directory: {source}\n"
+    )
+    assert native.installed_venv_python(text, {"HOME": str(tmp_path)}) == (python, source)
+    fixtures = Path(__file__).parents[1] / "fixtures"
+    help_text = (fixtures / f"hermes-{native.VERSION}-help.txt").read_text()
+    probes = iter(
+        [
+            ProbeResult(0, text, ""),
+            ProbeResult(1, "", "isolated runtime not installed"),
+            ProbeResult(0, text, ""),
+            ProbeResult(0, help_text, ""),
+        ]
+    )
+    monkeypatch.setattr(native, "find_executable", lambda *a: tmp_path / "hermes")
+    monkeypatch.setattr(native, "probe", lambda *a: next(probes))
+    detected = native.create_adapter().detect(
+        DetectionContext(HarnessSettings(), {"HOME": str(tmp_path)})
+    )
+    assert detected.status == "installed" and detected.executable == python
+    ctx = replace(context(tmp_path), detection=detected)
+    spec = native.create_adapter().launch(
+        provider(), "daily", ("chat", "-q", "hello"), ctx, SecretStore({"one": "key"})
+    )
+    assert spec.argv[:3] == native.source_driver(source)
+    assert spec.argv[3:8] == ("chat", "--provider", "custom:hs-one", "--model", "vendor/one-daily")
+    assert spec.environment["HERMES_DISABLE_LAZY_INSTALLS"] == "1"
+    facts.write_text(json.dumps({"packages": {"venv": {"environment": str(tmp_path)}}}))
+    assert native.installed_venv_python(text, {"HOME": str(tmp_path)}) is None

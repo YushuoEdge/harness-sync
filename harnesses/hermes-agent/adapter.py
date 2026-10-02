@@ -1,8 +1,11 @@
-"""Hermes v0.21.0 / 245e4800 named providers and isolated role homes."""
+"""Hermes v0.21.5 / 5bba024d named providers and isolated role homes."""
 
 from __future__ import annotations
 
+import hashlib
 import io
+import json
+import os
 import re
 import tempfile
 from pathlib import Path
@@ -17,8 +20,8 @@ from harness_sync.merge import MISSING, get_field, merge_fields
 from harness_sync.paths import absolute
 from harness_sync.schema import SecretRef, env_name
 
-VERSION = "0.21.0"
-REVISION = "245e4800"
+VERSION = "0.21.5"
+REVISION = "5bba024d"
 APIS = {
     "openai-chat": "chat_completions",
     "openai-responses": "codex_responses",
@@ -31,6 +34,13 @@ UNSET = frozenset(
         "HERMES_INFERENCE_PROVIDER",
         "HERMES_INFERENCE_MODEL",
         "HERMES_INFERENCE_BASE_URL",
+        "HERMES_INSTALL_ROOT",
+        "HERMES_RUNTIME_DIR",
+        "HERMES_DISABLE_LAZY_INSTALLS",
+        "__HERMES_ACTIVATED",
+        "__HERMES_TEST_PYTHON",
+        "PYTHONHOME",
+        "PYTHONPATH",
         "OPENAI_BASE_URL",
         "OPENAI_API_KEY",
         "OPENROUTER_BASE_URL",
@@ -39,6 +49,45 @@ UNSET = frozenset(
         "ANTHROPIC_AUTH_TOKEN",
     }
 )
+
+
+def installed_venv_python(version_text, environment):
+    """Locate PM's committed interpreter; never provision a profile runtime."""
+    match = re.search(r"^Install directory: (.+)$", version_text, re.MULTILINE)
+    if not match:
+        return None
+    root = Path(match[1])
+    if not root.is_absolute():
+        return None
+    identity = hashlib.sha256(str(root.resolve()).encode()).hexdigest()[:16]
+    default_home = Path(environment.get("HOME", str(Path.home()))) / ".hermes"
+    for home in (Path(environment.get("HERMES_HOME", default_home)), default_home):
+        state = home / "installs" / identity
+        try:
+            data = json.loads((state / "facts.json").read_bytes())
+            venv = Path(data["packages"]["venv"]["environment"])
+            if not venv.is_absolute() or not venv.resolve().is_relative_to(
+                (state / "environments").resolve()
+            ):
+                continue
+            candidate = venv / "bin/python3"
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return candidate, root
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return None
+
+
+def source_driver(root):
+    # Equivalent to upstream's source launcher, using the committed venv rather
+    # than its bare store Python. The source checkout supplies version identity.
+    return (
+        "-I",
+        "-c",
+        "import sys; sys.path.insert(0, "
+        + repr(str(root))
+        + "); from hermes_cli.main import main; sys.exit(main())",
+    )
 
 
 def parse(data):
@@ -138,20 +187,29 @@ class HermesAdapter(Adapter):
         executable = find_executable(self.command, context.environment, context.settings.executable)
         if executable is None:
             return Detection(self.id, "not-found", default_paths=paths)
+        driver_capability = ()
         try:
             with tempfile.TemporaryDirectory(prefix="hs-hermes-") as directory:
-                env = dict(context.environment, HERMES_HOME=directory)
-                env.pop("HERMES_PROFILE", None)
+                env = {k: v for k, v in context.environment.items() if k not in UNSET}
+                env.update(HERMES_HOME=directory, HERMES_DISABLE_LAZY_INSTALLS="1")
                 version, help_result = (
                     probe(executable, (flag,), env) for flag in ("--version", "--help")
                 )
+                if help_result.returncode and f"v{VERSION}" in version.stdout:
+                    candidate = installed_venv_python(version.stdout, context.environment)
+                    if candidate is not None:
+                        executable, source_root = candidate
+                        prefix = source_driver(source_root)
+                        version = probe(executable, prefix + ("--version",), env)
+                        help_result = probe(executable, prefix + ("--help",), env)
+                        driver_capability = ("source-root:" + str(source_root),)
         except UnsupportedError:
             return Detection(self.id, "probe-failed", executable, default_paths=paths)
-        match = re.search(r"Hermes Agent v([\d.]+).*upstream ([a-f0-9]+)", version.stdout)
+        match = re.search(r"Hermes Agent v([\d.]+)(?:\+[^\s]+)?", version.stdout)
         number = match[1] if match else None
         supported = (
             number == VERSION
-            and match[2] == REVISION
+            and (f"g{REVISION[:7]}" in version.stdout or f"upstream {REVISION}" in version.stdout)
             and version.returncode == help_result.returncode == 0
             and "--provider" in help_result.stdout
             and "--model" in help_result.stdout
@@ -162,7 +220,7 @@ class HermesAdapter(Adapter):
             executable,
             number,
             default_paths=paths,
-            capabilities=("named-providers",) if supported else (),
+            capabilities=("named-providers",) + driver_capability if supported else (),
         )
 
     def validate(self, provider, context):
@@ -309,6 +367,7 @@ class HermesAdapter(Adapter):
         environment["HERMES_HOME"] = str(
             context.paths.runtime(self.id, provider.command_alias) / role
         )
+        environment["HERMES_DISABLE_LAZY_INSTALLS"] = "1"
         selection = (
             "--provider",
             f"custom:hs-{provider.name}",
@@ -321,6 +380,16 @@ class HermesAdapter(Adapter):
             argv = selection + arguments
         else:
             argv = arguments
+        root = next(
+            (
+                c.removeprefix("source-root:")
+                for c in context.detection.capabilities
+                if c.startswith("source-root:")
+            ),
+            None,
+        )
+        if root is not None:
+            argv = source_driver(root) + argv
         return LaunchSpec(argv, environment, UNSET)
 
 

@@ -1,6 +1,6 @@
 # Hermes Agent adapter
 
-Implemented for **Hermes v0.21.0, upstream 245e4800**. Other releases/revisions fail closed.
+Implemented for **Hermes v0.21.5, upstream 5bba024d**. Other releases/revisions fail closed.
 Supports Chat Completions, OpenAI Responses and Anthropic Messages; Google is not enabled.
 
 ```sh
@@ -24,7 +24,14 @@ Authorized default writes merge owned YAML/provider/model fields and namespaced 
 preserving comments, bot tokens, unrelated providers and native auth stores. No gateway is started
 or restarted by synchronization. Active sessions may retain their selection until the next launch.
 
+The new native package manager keeps dependency generations outside the checkout. If the original
+launcher cannot probe an isolated home, detection reads its committed dependency facts and uses
+that generation's Python with the verified source CLI entry point. It never installs dependencies.
+Managed launches disable lazy installs and clear inherited runtime/interpreter overrides. Missing
+optional SDKs must be installed through the original command, e.g. `hermes pm install --extra anthropic`.
+Detection runs again on every managed launch, so a newly committed generation is selected.
+
 Version/help fixtures and tests cover role selection, native grammar, dotenv escaping, key rotation,
-default protection and conflicts. On 2026-10-01 localhost checks verified all three transports and
+default protection and conflicts. On 2026-10-02 localhost checks verified all three transports and
 roles with exact model IDs and fake keys, without paid inference or personal-config changes.
-See [spec](SPEC.md) and [pinned native provider source](https://github.com/NousResearch/hermes-agent/blob/245e48008fa814b3251f50755eb656bd9fb86cb1/hermes_cli/runtime_provider_custom.py).
+See [spec](SPEC.md) and [pinned native provider source](https://github.com/NousResearch/hermes-agent/blob/5bba024d/hermes_cli/runtime_provider_custom.py).
