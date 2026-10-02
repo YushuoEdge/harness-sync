@@ -4,7 +4,7 @@ Manage providers, three model roles, and API keys in one place, then synchronize
 
 **Status: shared framework and Codex adapter implemented; seven original v1 adapters pending.**
 
-The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. The other seven approved v1 harnesses report `not-implemented`. GitHub Copilot CLI has a revised managed-provider-registry design as an additional candidate, but no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. Qoder CLI is now a selected documentation target, blocked on a supported noninteractive BYOK interface. The fake test adapter continues to exercise shared workflows without touching real harnesses.
+The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. The other seven approved v1 harnesses report `not-implemented`. GitHub Copilot CLI has a revised managed-provider-registry design as an additional candidate, but no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. Qoder CLI and the official open-source ZCode CLI are selected documentation targets: Qoder remains blocked on noninteractive BYOK provisioning, while ZCode has a source-backed custom-provider design pending implementation and native validation. The fake test adapter continues to exercise shared workflows without touching real harnesses.
 
 ## Install and test the framework
 
@@ -41,6 +41,7 @@ Read the [adapter development guide](docs/adapter-development.md), then the targ
 | OpenClaw | [Overview](harnesses/openclaw/README.md) | [Spec](harnesses/openclaw/SPEC.md) |
 | GitHub Copilot CLI (candidate) | [Overview](harnesses/copilot/README.md) | [Spec](harnesses/copilot/SPEC.md) |
 | Qoder CLI (selected; blocked design) | [Overview](harnesses/qoder/README.md) | [Spec](harnesses/qoder/SPEC.md) |
+| ZCode CLI (selected; candidate design) | [Overview](harnesses/zcode/README.md) | [Spec](harnesses/zcode/SPEC.md) |
 | Cursor Agent CLI (blocked design) | [Overview](harnesses/cursor/README.md) | [Spec](harnesses/cursor/SPEC.md) |
 
 ## Configuration concept
@@ -100,6 +101,6 @@ Run this after the file has been generated, or add it to your startup file if yo
 
 ## Implementation scope
 
-Framework development and the Codex adapter are implemented. Other native adapters remain separate; the Copilot, Cursor and Qoder directories are documentation-only and are not registry entries. The core uses Python 3.11+, Pydantic, ruamel.yaml, tomlkit and the standard-library CLI parser; it targets macOS/Linux.
+Framework development and the Codex adapter are implemented. Other native adapters remain separate; the Copilot, Cursor, Qoder and ZCode directories are documentation-only and are not registry entries. The core uses Python 3.11+, Pydantic, ruamel.yaml, tomlkit and the standard-library CLI parser; it targets macOS/Linux.
 
 Default writes remain an explicit runtime choice. The tool never modifies shell startup files. Current implementation details and limitations are in the adapter development guide.
