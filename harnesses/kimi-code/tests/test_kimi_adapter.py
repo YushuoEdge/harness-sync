@@ -39,7 +39,7 @@ def context(tmp_path, current=None, baseline=None):
             Path(sys.executable),
             native.VERSION,
             default_paths=(tmp_path / "native/config.toml",),
-            capabilities=("legacy-share-dir",),
+            capabilities=("code-home",),
         ),
         HarnessSettings(),
         lambda p: current,
@@ -61,8 +61,8 @@ def test_profiles_and_roles(tmp_path, protocol):
     for role in ("simple", "daily", "complex"):
         assert doc["models"]["hs-one-" + role]["model"] == f"vendor/one-{role}"
         spec = a.launch(p, role, ("--prompt", "prompt with quotes'"), ctx, keys)
-        assert spec.argv[3] == "hs-one-" + role
-        assert spec.environment["KIMI_SHARE_DIR"].endswith("kimi-code/one")
+        assert spec.argv[1] == "hs-one-" + role
+        assert spec.environment["KIMI_CODE_HOME"].endswith("kimi-code/one")
         assert "OPENAI_BASE_URL" in spec.unset and "OPENAI_API_KEY" in spec.unset
         assert "test-one" not in str(spec.argv)
 
@@ -111,20 +111,20 @@ def test_routing_flags(tmp_path, flag):
         )
 
 
-def test_detect_legacy_path_and_unknown_version(monkeypatch, tmp_path):
+def test_detect_code_home_and_unknown_version(monkeypatch, tmp_path):
     fixtures = Path(__file__).parents[1] / "fixtures"
     monkeypatch.setattr(native, "find_executable", lambda *a: Path("/test/kimi"))
     help_text = (fixtures / f"kimi-{native.VERSION}-help.txt").read_text()
     for number, expected in [(native.VERSION, "installed"), ("9.9.9", "unsupported-version")]:
         values = iter(
-            [ProbeResult(0, f"kimi, version {number}", ""), ProbeResult(0, help_text, "")]
+            [ProbeResult(0, number, ""), ProbeResult(0, help_text, "")]
         )
         monkeypatch.setattr(native, "probe", lambda *a, values=values: next(values))
         result = native.create_adapter().detect(
             DetectionContext(HarnessSettings(), {"HOME": str(tmp_path)})
         )
         assert result.status == expected
-        assert result.default_paths == (tmp_path / ".kimi/config.toml",)
+        assert result.default_paths == (tmp_path / ".kimi-code/config.toml",)
 
 
 def test_engine_profile_only_rotation(monkeypatch, tmp_path):

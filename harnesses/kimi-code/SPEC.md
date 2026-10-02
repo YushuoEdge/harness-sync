@@ -1,6 +1,6 @@
 # Kimi Code adapter specification
 
-Status: **Implemented for legacy Kimi CLI 1.49.0; newer home format remains unverified.** Adapter ID: `kimi-code`. Native command: `kimi`.
+Status: **Implemented for Kimi Code 2.1.1.** Adapter ID: `kimi-code`. Native command: `kimi`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -10,7 +10,7 @@ Current documentation places `config.toml` under `~/.kimi-code`, relocatable usi
 
 ## Adapter design
 
-- Detect `kimi`, version, home/config capabilities and legacy config presence. Older `~/.kimi` installations must receive a version-specific mapping or a clear unsupported diagnostic; never migrate them automatically.
+- Detect `kimi`, version, home/config capabilities and legacy config presence. Legacy Python installations are unsupported by this adapter; never migrate their data automatically.
 - Render a full managed `config.toml` in isolated `KIMI_CODE_HOME` per provider. Map protocol types to native `anthropic`, `openai`, `openai_responses`, or `google-genai`, subject to installed capability tests.
 - Native provider table: namespaced provider ID, `type`, `base_url`, resolved `api_key`. Native model tables: `hs-<alias>-<role>`, `provider`, upstream `model`, and `max_context_size`. Require canonical `context_window` for every model when this native field is mandatory.
 - Render `default_model` as daily; launch `kimi-<alias>` with the isolated home and requested `--model` alias. Maintain stable isolated sessions across launches, not ephemeral homes.
@@ -35,10 +35,15 @@ Consume the core's resolved provider-local model `id` (falling back to `name`), 
 
 When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
 
-## Implemented release boundary
+## Implemented release boundary (2026-10-02)
 
-The supported 1.49.0 mapping uses `KIMI_SHARE_DIR`, `~/.kimi/config.toml`, `--config-file`, and
-protocol types `anthropic`, `openai_legacy`, `openai_responses`, `google_genai`. It does not migrate
-to `~/.kimi-code`. All transports and roles passed localhost checks on 2026-10-01.
-Output limits and reasoning effort are rejected; an optional `reserved_context_size` setting
-permits explicitly budgeting small model windows. Unknown native versions fail closed.
+The installed Python CLI was upgraded to 1.52.0, which only prints a deprecation notice.
+Installed its official successor `@moonshot-ai/kimi-code` **2.1.1**; the uv installation is retained.
+This adapter now targets the successor only, with `KIMI_CODE_HOME`, `~/.kimi-code/config.toml`,
+`--model`, and protocol types `anthropic`, `openai`, `openai_responses`, `google-genai`.
+It no longer emits `--config-file`, `--thinking` or `KIMI_SHARE_DIR`.
+Provider entries use `model_source = "static"`; no provider discovery or account login is needed.
+Output limits and reasoning effort remain rejected. Existing user defaults and sessions are
+not migrated; generated profiles retain the shared ownership/conflict protections.
+All transports and roles passed localhost checks with exact IDs and fake credentials.
+Native home/version/help fixtures and adapter tests verify the new contract.
