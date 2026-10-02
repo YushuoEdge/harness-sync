@@ -1,6 +1,6 @@
 # Hermes Agent adapter specification
 
-Status: **Native design pending implementation; shared framework ready.** Adapter ID: `hermes-agent`. Native command: `hermes`.
+Status: **Implemented for v0.21.0, upstream 245e4800.** Adapter ID: `hermes-agent`. Native command: `hermes`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -35,3 +35,11 @@ Consume the core's resolved provider-local model `id` (falling back to `name`), 
 ## Planned directory ownership
 
 When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+
+## Implemented release boundary
+
+The verified native provider map uses `providers.hs-<name>`, `key_env`, `transport` and per-model
+metadata; explicit selection uses `custom:hs-<name>`. Chat, Responses and Anthropic passed localhost
+checks for every role on 2026-10-01. Persistent per-role homes prevent concurrent selection races.
+Dotenv credentials containing interpolation syntax are rejected; known routing/config bypass
+flags fail closed. Native defaults merge YAML and dotenv together; no gateway restart is implied.
