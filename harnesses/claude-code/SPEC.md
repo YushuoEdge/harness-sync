@@ -1,6 +1,6 @@
 # Claude Code adapter specification
 
-Status: **Native design pending implementation; shared framework ready.** Adapter ID: `claude-code`. Native command: `claude`.
+Status: **Implemented for Claude Code 2.1.278.** Adapter ID: `claude-code`. Native command: `claude`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -35,3 +35,10 @@ Consume the core's resolved provider-local model `id` (falling back to `name`), 
 ## Planned directory ownership
 
 When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+
+## Implemented release boundary
+
+The overlay carries literal credentials in private role files so project environment settings cannot
+replace the selected key/endpoint. It disables inherited token/provider toggles and key helpers.
+Custom headers, keyless auth and model effort are rejected. Native localhost routing was verified
+on 2026-10-01 with synthetic credentials; unknown versions fail closed.

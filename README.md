@@ -2,9 +2,9 @@
 
 Manage providers, three model roles, and API keys in one place, then synchronize them across coding harnesses.
 
-**Status: shared framework and Codex adapter implemented; seven original v1 adapters pending.**
+**Status: shared framework, Codex and Claude Code adapters implemented; six v1 adapters pending.**
 
-The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. The other seven approved v1 harnesses report `not-implemented`. GitHub Copilot CLI has a revised managed-provider-registry design as an additional candidate, but no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. Qoder CLI and the official open-source ZCode CLI are selected documentation targets: Qoder remains blocked on noninteractive BYOK provisioning, while ZCode has a source-backed custom-provider design pending implementation and native validation. The fake test adapter continues to exercise shared workflows without touching real harnesses.
+The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. Claude Code 2.1.278 supports Anthropic settings overlays. The other six approved v1 harnesses report `not-implemented`. GitHub Copilot CLI has a revised managed-provider-registry design as an additional candidate, but no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. Qoder CLI and the official open-source ZCode CLI are selected documentation targets: Qoder remains blocked on noninteractive BYOK provisioning, while ZCode has a source-backed custom-provider design pending implementation and native validation. The fake test adapter continues to exercise shared workflows without touching real harnesses.
 
 ## Install and test the framework
 
