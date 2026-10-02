@@ -1,6 +1,6 @@
 # Claude Code adapter
 
-Implemented for **Claude Code 2.1.278**; other versions fail closed. Protocol: Anthropic Messages.
+Implemented for **Claude Code 2.1.287**; other versions fail closed. Protocol: Anthropic Messages.
 
 ```sh
 harness-sync plan --harness claude-code
@@ -23,3 +23,11 @@ Version/help fixtures and adapter tests cover roles, routing flags, key rotation
 conflicts. A native localhost smoke test on 2026-10-01 confirmed `/v1/messages`, exact upstream ID
 and the selected API key despite stale user settings/key helpers; original settings were unchanged.
 No real credentials or paid inference were used. See [spec](SPEC.md).
+
+## 2026-10-02 release validation
+
+Updated the installed harness to **2.1.287** and refreshed the pinned version/help fixtures.
+All supported protocols and all three roles passed localhost error-response routing checks
+with slash-containing model IDs and fake API keys. These checks prove endpoint, outbound model
+ID and credential routing; they do not exercise paid inference. Adapter unit tests passed.
+Native user defaults and authentication files were untouched.

@@ -1,4 +1,4 @@
-"""Claude Code 2.1.278 settings overlays and explicit Anthropic routing."""
+"""Claude Code 2.1.287 settings overlays and explicit Anthropic routing."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from harness_sync.merge import MISSING, merge_fields
 from harness_sync.paths import absolute
 from harness_sync.schema import SecretRef
 
-VERSION = "2.1.278"
+VERSION = "2.1.287"
 TIERS = {"simple": "HAIKU", "daily": "SONNET", "complex": "OPUS"}
 CONFLICTING = frozenset(
     {
