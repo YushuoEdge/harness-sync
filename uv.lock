@@ -25,6 +25,8 @@ name = "harness-sync-config"
 version = "0.1.0a1"
 source = { editable = "." }
 dependencies = [
+    { name = "json5" },
+    { name = "json5kit" },
     { name = "pydantic" },
     { name = "ruamel-yaml" },
     { name = "tomlkit" },
@@ -38,6 +40,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "json5", specifier = "==0.12.1" },
+    { name = "json5kit", specifier = "==0.4.0" },
     { name = "pydantic", specifier = ">=2.10,<3" },
     { name = "ruamel-yaml", specifier = ">=0.18,<0.19" },
     { name = "tomlkit", specifier = ">=0.13,<1" },
@@ -56,6 +60,24 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503, upload-time = "2025-10-18T21:55:43.219Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484, upload-time = "2025-10-18T21:55:41.639Z" },
+]
+
+[[package]]
+name = "json5"
+version = "0.12.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/12/ae/929aee9619e9eba9015207a9d2c1c54db18311da7eb4dcf6d41ad6f0eb67/json5-0.12.1.tar.gz", hash = "sha256:b2743e77b3242f8d03c143dd975a6ec7c52e2f2afe76ed934e53503dd4ad4990", size = 52191, upload-time = "2025-08-12T19:47:42.583Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/85/e2/05328bd2621be49a6fed9e3030b1e51a2d04537d3f816d211b9cc53c5262/json5-0.12.1-py3-none-any.whl", hash = "sha256:d9c9b3bc34a5f54d43c35e11ef7cb87d8bdd098c6ace87117a7b7e83e705c1d5", size = 36119, upload-time = "2025-08-12T19:47:41.131Z" },
+]
+
+[[package]]
+name = "json5kit"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/67/8d48f04daae6a794f4b847f44a8368cd48597da778edc4efca35305b61c0/json5kit-0.4.0.tar.gz", hash = "sha256:0f7978bed6aa539133873bda602aa3f130ee83cfdafa93565b55a63a5d2f3490", size = 8866, upload-time = "2023-05-16T20:48:22.867Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/72/72cf4310a3d6cab45d48cb27e5f5e8420e1b955bb5cb0ab6e5f8adfa2e8d/json5kit-0.4.0-py3-none-any.whl", hash = "sha256:8fac2788abd070bdffbfad9bc0c7755bb7c259fa56a163b8517ba5aa4d0e2cb7", size = 8730, upload-time = "2023-05-16T20:48:20.654Z" },
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 # OpenCode adapter specification
 
-Status: **Native design pending implementation; shared framework ready.** Adapter ID: `opencode`. Native command: `opencode`.
+Status: **Implemented for OpenCode 1.17.13.** Adapter ID: `opencode`. Native command: `opencode`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -34,3 +34,11 @@ Consume the core's resolved provider-local model `id` (falling back to `name`), 
 ## Planned directory ownership
 
 When implemented, this directory will contain `adapter.py`, versioned native fixtures and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+
+## Implemented release boundary
+
+Four bundled SDK wire mappings and all roles passed localhost checks on 2026-10-01. The runner
+uses inline config, an explicit native model selector, provider/model-level endpoint/key settings,
+and `--pure` to disable external plugins. Stale project routing was checked. The default editor
+preserves supported line comments/trailing commas and refuses syntax outside its roundtrip parser
+without writing. Native policy retains authority; per-model effort and remote dispatch are rejected.
