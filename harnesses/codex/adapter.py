@@ -27,7 +27,7 @@ from harness_sync.schema import Provider, Role, SecretRef, StrictModel, env_name
 from harness_sync.secrets import SecretStore
 
 _VERSION = re.compile(r"(?:codex-cli\s+)?(\d+)\.(\d+)\.(\d+)(?:[-+][^\s]+)?")
-_SUPPORTED_VERSIONS = frozenset({(0, 154, 0)})
+_SUPPORTED_VERSIONS = frozenset({(0, 160, 0)})
 _PROFILE_HELP_MARKERS = ("--profile <CONFIG_PROFILE_V2>", "<name>.config.toml")
 _REASONING_EFFORTS = frozenset({"none", "minimal", "low", "medium", "high", "xhigh"})
 _UNSET_ENV = frozenset(

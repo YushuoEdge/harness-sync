@@ -52,7 +52,7 @@ def context(tmp_path: Path, current: bytes | None = None, baseline: bytes | None
         "codex",
         "installed",
         Path(sys.executable),
-        "0.154.0",
+        "0.160.0",
         default_paths=(default,),
         profile_roots=(native,),
         capabilities=("profile-v2", "responses"),
@@ -75,8 +75,8 @@ def test_detects_profile_v2_fixture_and_isolates_probe(monkeypatch, tmp_path):
     fixture = Path(__file__).parents[1] / "fixtures"
     results = iter(
         (
-            ProbeResult(0, (fixture / "codex-0.154.0-version.txt").read_text(), ""),
-            ProbeResult(0, (fixture / "codex-0.154.0-help.txt").read_text(), ""),
+            ProbeResult(0, (fixture / "codex-0.160.0-version.txt").read_text(), ""),
+            ProbeResult(0, (fixture / "codex-0.160.0-help.txt").read_text(), ""),
         )
     )
     environments = []
@@ -90,7 +90,7 @@ def test_detects_profile_v2_fixture_and_isolates_probe(monkeypatch, tmp_path):
     settings = HarnessSettings(config_path=str(tmp_path / "native/config.toml"))
     result = CodexAdapter().detect(DetectionContext(settings, {"PATH": ""}))
     assert result.status == "installed"
-    assert result.version == "0.154.0"
+    assert result.version == "0.160.0"
     assert result.profile_roots == (tmp_path / "native",)
     assert len({env["CODEX_HOME"] for env in environments}) == 1
     assert environments[0]["CODEX_HOME"] != str(tmp_path / "native")
@@ -260,7 +260,7 @@ def test_engine_sync_writes_profiles_but_not_default(tmp_path, monkeypatch):
         "codex",
         "installed",
         Path(sys.executable),
-        "0.154.0",
+        "0.160.0",
         default_paths=(native / "config.toml",),
         capabilities=("profile-v2", "responses"),
         profile_roots=(native,),

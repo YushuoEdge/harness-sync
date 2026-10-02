@@ -1,8 +1,8 @@
 # Codex adapter specification
 
-Status: **Implemented and locally verified with Codex CLI 0.154.0.** Adapter ID: `codex`. Native command: `codex`.
+Status: **Implemented and locally verified with Codex CLI 0.160.0.** Adapter ID: `codex`. Native command: `codex`.
 
-The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York). Codex CLI 0.154.0 profile parsing was smoke-checked locally on 2026-09-15 without inference.
+The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York). Codex CLI 0.160.0 profile parsing was smoke-checked locally on 2026-09-15 without inference.
 
 ## Native interface and evidence
 
@@ -33,4 +33,12 @@ Consume the core's resolved provider-local model `id` (falling back to `name`), 
 
 ## Directory ownership
 
-This directory contains `adapter.py`, a 0.154.0 native capability fixture and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+This directory contains `adapter.py`, a 0.160.0 native capability fixture and adapter tests. Harness-specific detection, rendering, merge paths, launch rules and compatibility checks stay here; shared I/O and secret handling remain in the core.
+
+## 2026-10-02 release validation
+
+Updated the installed harness to **0.160.0** and refreshed the pinned version/help fixtures.
+All supported protocols and all three roles passed localhost error-response routing checks
+with slash-containing model IDs and fake API keys. These checks prove endpoint, outbound model
+ID and credential routing; they do not exercise paid inference. Adapter unit tests passed.
+Native user defaults and authentication files were untouched.
