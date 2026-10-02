@@ -1,4 +1,4 @@
-"""OpenClaw 2026.6.11 isolated role state and native environment secret references."""
+"""OpenClaw 2026.9.7 isolated role state and native environment secret references."""
 
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ from harness_sync.paths import absolute
 from harness_sync.schema import SecretRef, StrictModel, env_name
 from harnesses.opencode.jsonc import edit, parse
 
-VERSION = "2026.6.11"
-REVISION = "e085fa1"
+VERSION = "2026.9.7"
+REVISION = "c074824"
 ROLES = ("simple", "daily", "complex")
 APIS = {
     "openai-chat": "openai-completions",
