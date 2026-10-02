@@ -1,6 +1,6 @@
 # OpenCode adapter specification
 
-Status: **Implemented for OpenCode 1.17.13.** Adapter ID: `opencode`. Native command: `opencode`.
+Status: **Implemented for OpenCode 1.18.34.** Adapter ID: `opencode`. Native command: `opencode`.
 
 The [overall specification](../../SPEC.md) governs secrets, ownership, transactions, selection and default-write permission. Native facts below were checked against linked public sources on 2026-09-14 (America/New_York); no installed release has been validated yet. Proposed behavior is not an implementation claim.
 
@@ -42,3 +42,11 @@ uses inline config, an explicit native model selector, provider/model-level endp
 and `--pure` to disable external plugins. Stale project routing was checked. The default editor
 preserves supported line comments/trailing commas and refuses syntax outside its roundtrip parser
 without writing. Native policy retains authority; per-model effort and remote dispatch are rejected.
+
+## 2026-10-02 release validation
+
+The installed OpenCode was updated to **1.18.34** and its native help/version fixtures refreshed.
+All four protocols and all three roles passed localhost error-response checks with exact
+slash-containing IDs, custom headers and fake keys. Unit tests passed. The existing SDK catalog
+and managed launch contract remain compatible. No personal default or authentication files
+were changed. These routing checks do not assert successful inference.
