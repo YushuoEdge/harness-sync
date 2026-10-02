@@ -1,6 +1,6 @@
 # Pi adapter
 
-Implemented for **Pi coding agent 0.85.1**. Other versions and unrelated `pi` executables fail closed.
+Implemented for **Pi coding agent 1.0.0**. Other versions and unrelated `pi` executables fail closed.
 Supports Anthropic Messages, OpenAI Chat, OpenAI Responses and Google Generative AI.
 
 ```sh
@@ -25,3 +25,11 @@ On 2026-10-01 a localhost request stub verified all four protocols and all three
 IDs and fake credentials. Anthropic base URLs normally omit `/v1` because its SDK appends it;
 Chat/Responses endpoints normally include `/v1`. Google appends `models/<id>:streamGenerateContent`.
 See [spec](SPEC.md) and [native custom-model documentation](https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/models.md).
+
+## 2026-10-02 release validation
+
+Updated the installed harness to **1.0.0** and refreshed the pinned version/help fixtures.
+All supported protocols and all three roles passed localhost error-response routing checks
+with slash-containing model IDs and fake API keys. These checks prove endpoint, outbound model
+ID and credential routing; they do not exercise paid inference. Adapter unit tests passed.
+Native user defaults and authentication files were untouched.

@@ -1,4 +1,4 @@
-"""Pi 0.85.1 provider catalogs in persistent isolated agent directories."""
+"""Pi 1.0.0 provider catalogs in persistent isolated agent directories."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from harness_sync.merge import MISSING, get_field, merge_fields
 from harness_sync.paths import absolute
 from harness_sync.schema import SecretRef, env_name
 
-VERSION = "0.85.1"
+VERSION = "1.0.0"
 APIS = {
     "anthropic": "anthropic-messages",
     "openai-chat": "openai-completions",
