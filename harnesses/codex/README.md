@@ -1,6 +1,6 @@
 # Codex adapter
 
-**Native adapter implemented for Codex CLI 0.154.0.**
+**Native adapter implemented for Codex CLI 0.160.0.**
 
 Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC.md).
 
@@ -11,7 +11,7 @@ Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC
 | Provider command | `codex-<alias>` |
 | Role selection | `harness-sync run codex --provider <alias> --role simple\|daily\|complex -- ...` |
 | Default files | Written only with explicit runtime authorization |
-| Verified releases | 0.154.0; other versions fail closed |
+| Verified releases | 0.160.0; other versions fail closed |
 
 ## Usage
 
@@ -26,3 +26,11 @@ Each managed launch refreshes its selected configuration before starting the har
 ## Implementation boundary
 
 This directory owns the native adapter, fixtures and tests. The adapter exports `create_adapter()`, detects the profile-v2 help signature, renders secret-free TOML references, rejects routing overrides, and uses format-preserving three-way merges for explicitly authorized default writes. The implementation does not install personal wrappers or modify native configuration merely by being imported or detected.
+
+## 2026-10-02 release validation
+
+Updated the installed harness to **0.160.0** and refreshed the pinned version/help fixtures.
+All supported protocols and all three roles passed localhost error-response routing checks
+with slash-containing model IDs and fake API keys. These checks prove endpoint, outbound model
+ID and credential routing; they do not exercise paid inference. Adapter unit tests passed.
+Native user defaults and authentication files were untouched.
