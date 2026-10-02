@@ -1,28 +1,82 @@
 # OpenClaw adapter
 
-**Native adapter pending; shared framework available.**
+**Implemented for OpenClaw 2026.6.11 / e085fa1.** Other releases fail closed.
 
-Read the [adapter specification](SPEC.md) and [overall specification](../../SPEC.md).
-
-| Item | Planned behavior |
-| --- | --- |
-| Adapter ID | `openclaw` |
-| Native executable | `openclaw` |
-| Provider command | `openclaw-<alias>` |
-| Role selection | `harness-sync run openclaw --provider <alias> --role simple\|daily\|complex -- ...` |
-| Default files | Written only with explicit runtime authorization |
-| Verified releases | None yet; versioned native tests required |
-
-## Proposed usage after implementation
+Supports Anthropic Messages, OpenAI Chat, OpenAI Responses and Google GenAI.
+Each provider/role has a stable private state directory, workspace and
+`openclaw.json`. Native environment SecretRefs deliver API keys and headers;
+credentials do not appear in generated profile files. No channels, OAuth,
+plugins or personal agents are copied. Native state isolation is not a sandbox.
 
 ```sh
 harness-sync plan --harness openclaw
-harness-sync sync --harness openclaw
-harness-sync run openclaw --provider <alias> --role daily -- ...
+harness-sync sync --harness openclaw --profiles-only
+harness-sync run openclaw --provider team --role complex -- agent --local --agent main --message 'Explain this code'
 ```
 
-Each managed launch refreshes its selected configuration before starting the harness. No background watcher or enablement flag is needed. After this adapter is implemented, these examples generate/manage profiles; ordinary commands remain available. See the spec for exact native paths, credential strategy, shared versus isolated session behavior, default merge fields, and release gates. Protocol support depends on the installed native version and configured endpoint. No key or real native configuration belongs in this source directory.
+The runner refreshes profiles before launch and pins `agent --model` to the exact
+provider-local ID. Repeated IDs share one catalog entry and the first role's
+native alias; conflicting metadata is rejected. Model IDs can contain slashes.
+Reasoning effort and no-auth providers are rejected because their native mapping
+has not been validated. Reasoning capability, context/output limits and text/image
+input metadata are supported.
 
-## Implementation boundary
+Foreground gateway use requires an explicit provider override:
 
-This directory owns the native adapter and its tests. Follow the [adapter development guide](../../docs/adapter-development.md); its API is implemented in the shared core. Add `adapter.py` exporting `create_adapter()` when ready. This directory currently contains only documentation and its adapter manifest. No native implementation, personal wrapper installation or native configuration changes have been performed. Final installation instructions, supported-version ranges and smoke-test evidence will be added when implemented.
+```yaml
+overrides:
+  openclaw:
+    options:
+      gateway_port_base: 23000
+```
+
+The simple/daily/complex ports are base/base+1/base+2. Choose distinct port ranges
+for different providers, including room for OpenClaw's auxiliary listeners.
+Native bind conflicts fail normally; the adapter rejects `--force`. Managed
+gateways use loopback binding and a role-specific HMAC token derived from the
+API key, supplied through a separate child environment variable. API-key rotation
+also rotates gateway authentication; restart an existing foreground gateway to
+activate it. Sync never starts or stops a service.
+
+```sh
+harness-sync run openclaw --provider team --role daily -- gateway run
+harness-sync run openclaw --provider team --role daily -- gateway health --json
+```
+
+Gateway service installation/removal/start/restart/stop commands and routing overrides
+are rejected. Agent turns without `--local`, and remote TUI clients, require the
+configured gateway port. Messaging integrations are not provisioned automatically.
+
+## Authorized defaults
+
+Default writes require the shared core's separate runtime authorization. They
+merge only managed providers, aliases and the selected primary model, preserving
+fallbacks, channels, gateway settings, personal agents and unrelated providers.
+Defaults use literal credentials in a private mode-0600 config so the original
+CLI can run without the managed environment. `${...}` in literal values is
+rejected to prevent native interpolation from changing their meaning.
+
+Config detection honors explicit paths, native state/profile overrides and the
+legacy `.clawdbot` / `clawdbot.json` candidates. JSON5 comments and trailing commas
+are preserved by the conservative concrete-syntax editor shared with OpenCode.
+Unsupported syntax, `$include` configs, scalar parents, managed-name collisions
+and edits to previously managed fields fail before writes. The adapter does not
+edit native auth databases or derived per-agent `models.json`.
+
+## Verification
+
+Fixtures pin native version and agent help. Automated tests cover role/model
+identity, protocol maps, defaults preservation, key rotation, obsolete catalog
+removal, flags, ports, private permissions and profile-only default protection.
+Native localhost checks verified all four protocols across three roles against
+an error-response stub, plus native config validation and authenticated isolated
+gateway health. These checks prove request routing, not successful inference.
+
+```sh
+uv run pytest harnesses/openclaw
+uv run python harnesses/openclaw/tests/smoke_native.py --executable /opt/homebrew/bin/openclaw --gateway
+```
+
+See the [adapter spec](SPEC.md), [CLI reference](https://docs.openclaw.ai/cli),
+[custom-provider documentation](https://docs.openclaw.ai/gateway/config-tools/custom-providers)
+and [overall specification](../../SPEC.md).

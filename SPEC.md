@@ -1,8 +1,8 @@
 # Harness Sync Config — specification
 
-Status: **Shared framework and Codex adapter implemented; remaining native adapters pending.**
+Status: **Shared framework and all eight original v1 adapters implemented for pinned releases.**
 
-This document describes the full target design. The current framework subset and deliberate API refinements are documented in [adapter development](docs/adapter-development.md). In particular: native options are under typed `options` objects; plans currently show metadata rather than native content diffs; prune/best-effort/adopt-changes are pending. Codex CLI 0.154.0 is the only implemented native adapter.
+This document describes the full target design. The current framework subset and deliberate API refinements are documented in [adapter development](docs/adapter-development.md). In particular: native options are under typed `options` objects; plans currently show metadata rather than native content diffs; prune/best-effort/adopt-changes are pending. All eight original v1 adapters are implemented; supported releases and protocols are listed in the compatibility matrix. This does not imply every target feature below is implemented.
 
 ## 1. Purpose and scope
 
@@ -308,4 +308,4 @@ Required tests include:
 
 This draft proposes Python, the YAML schema above, three named roles, private API-key storage, profile-only writes by default, documented manual shell setup, and all eight adapters as v1 requirements. Approving implementation does not itself enable native default writes on this machine; that remains a separate runtime setting or command choice.
 
-The user authorized the shared framework. Harness-specific implementations belong to subsequent adapter tasks. Review the [compatibility matrix](docs/compatibility.md) and each adapter spec before its implementation. Development and tests do not install personal wrappers or change real native harness configuration.
+The user authorized the shared framework and subsequently authorized the remaining v1 adapters, implemented sequentially with one commit per adapter. Review the [compatibility matrix](docs/compatibility.md) and each adapter spec before its implementation. Development and tests do not install personal wrappers or change real native harness configuration.
