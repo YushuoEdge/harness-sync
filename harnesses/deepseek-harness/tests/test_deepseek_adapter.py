@@ -44,12 +44,12 @@ def context(tmp_path, current=None, baseline=None):
             "installed",
             Path(sys.executable),
             native.VERSION,
-            default_paths=(tmp_path / "native/settings.yaml",),
+            default_paths=(tmp_path / "native/cordis.patch.yml",),
             capabilities=("bundled-profiles",),
         ),
         HarnessSettings(options={"base_profile": "headless"}),
-        lambda p: current,
-        lambda p: baseline,
+        lambda p: current if p == tmp_path / "native/cordis.patch.yml" else None,
+        lambda p: baseline if p == tmp_path / "native/cordis.patch.yml" else None,
     )
 
 
@@ -59,7 +59,7 @@ def test_profiles_and_roles(tmp_path, protocol):
     keys = SecretStore({"one": "test-one"})
     a.validate(p, ctx)
     artifacts = a.profiles(p, ctx)
-    assert len(artifacts) == 9
+    assert len(artifacts) == 6
     for artifact in artifacts:
         data = artifact.render(keys)
         artifact.verify(data)
@@ -67,9 +67,9 @@ def test_profiles_and_roles(tmp_path, protocol):
         assert artifact.mode == 0o600
         if artifact.path.name == "package.json":
             assert json.loads(data)["dsh"]["profile"]["bundles"][-1] == "@deepseek-ai/dsh-headless"
-        if artifact.path.name == "settings.yaml":
-            settings = native.parse(data)
-            role = artifact.path.parent.name
+        if artifact.path.name == "cordis.patch.yml":
+            settings = {row["id"]: row["config"] for row in native.parse_patch(data)}
+            role = artifact.path.parents[2].name
             assert settings["agent-default-model"]["model"] == f"vendor/one-{role}"
             assert settings["llm-pi-ai"]["providers"]["hs-one"]["api"] == native.APIS[protocol]
     for role in ("simple", "daily", "complex"):
@@ -81,10 +81,10 @@ def test_profiles_and_roles(tmp_path, protocol):
 
 def test_defaults_comments_conflicts_and_inert_tags(tmp_path):
     a, p = native.create_adapter(), provider()
-    data = a.defaults((p,), p, "daily", context(tmp_path, b"# preserve\nother: keep\n"))[0].render(
-        SecretStore({"one": "test-one"})
-    )
-    assert b"# preserve" in data and native.parse(data)["other"] == "keep"
+    data = a.defaults(
+        (p,), p, "daily", context(tmp_path, b"# preserve\n- id: other\n  config: {value: keep}\n")
+    )[0].render(SecretStore({"one": "test-one"}))
+    assert b"# preserve" in data and native.parse_patch(data)[0]["config"]["value"] == "keep"
     changed = data.replace(b"vendor/one-daily", b"manual")
     with pytest.raises(ConflictError):
         a.defaults((p,), p, "daily", context(tmp_path, changed, data))[0].render(
@@ -145,3 +145,43 @@ def test_engine_default_protection(monkeypatch, tmp_path):
     engine.sync(selection)
     assert times == [x.stat().st_mtime_ns for x in paths]
     assert not ctx.detection.default_paths[0].exists()
+
+
+def test_home_override_and_patch_validation(tmp_path):
+    from dataclasses import replace
+
+    a, p, ctx = native.create_adapter(), provider(), context(tmp_path)
+    for data in (b"- id: agent-default-model\n  config: {model: stale}\n", b"value: old\n"):
+        overridden = replace(ctx, read=lambda _, data=data: data)
+        with pytest.raises(HarnessSyncError):
+            a.launch(p, "daily", ("hello",), overridden, SecretStore({"one": "key"}))
+    for data in (
+        b"- id: duplicate\n- id: duplicate\n",
+        b"- id: unsafe\n  config: !!js process.exit()\n",
+    ):
+        with pytest.raises(HarnessSyncError):
+            native.parse_patch(data)
+
+
+def test_default_preserves_unrelated_rows_and_provider_fields(tmp_path):
+    current = b"""# native patch
+- id: llm-pi-ai
+  config:
+    timeout: 123
+    providers:
+      personal: {baseURL: https://keep.invalid}
+- id: agent-default-model
+  config: {provider: personal, model: old, other: keep}
+- id: sandbox
+  config: {policy: strict}
+"""
+    a, p = native.create_adapter(), provider()
+    data = a.defaults((p,), p, "complex", context(tmp_path, current))[0].render(
+        SecretStore({"one": "key"})
+    )
+    rows = {r["id"]: r["config"] for r in native.parse_patch(data)}
+    assert b"# native patch" in data
+    assert rows["llm-pi-ai"]["timeout"] == 123
+    assert rows["llm-pi-ai"]["providers"]["personal"]["baseURL"] == "https://keep.invalid"
+    assert rows["agent-default-model"]["other"] == "keep"
+    assert rows["sandbox"] == {"policy": "strict"}

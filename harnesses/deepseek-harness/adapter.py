@@ -1,4 +1,4 @@
-"""DeepSeek Harness 0.1.2-rc.1 native settings and bundled profiles."""
+"""DeepSeek Harness 0.2.0-rc.2 Cordis patches and bundled profiles."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from harness_sync.merge import MISSING, get_field, merge_fields
 from harness_sync.paths import absolute
 from harness_sync.schema import SecretRef, StrictModel, env_name
 
-VERSION = "0.1.2-rc.1"
+VERSION = "0.2.0-rc.2"
 APIS = {
     "anthropic": "anthropic-messages",
     "openai-chat": "openai-completions",
@@ -66,6 +66,24 @@ def encode(value):
     stream = io.StringIO()
     YAML(typ="rt").dump(value, stream)
     return stream.getvalue().encode()
+
+
+def parse_patch(data):
+    try:
+        rows = YAML(typ="rt").load((data or b"[]").decode())
+        if not isinstance(rows, list) or not all(isinstance(row, dict) for row in rows):
+            raise ValueError
+        # Roundtrip each row through the inert settings parser to reject executable tags.
+        for row in rows:
+            parse(encode(row))
+        addressed = [row["id"] for row in rows if "id" in row]
+        if not all(isinstance(key, str) for key in addressed) or len(set(addressed)) != len(
+            addressed
+        ):
+            raise ValueError
+        return rows
+    except Exception:
+        raise HarnessSyncError("Invalid or tagged DeepSeek Cordis patch YAML") from None
 
 
 def catalog(provider, secrets=None):
@@ -124,7 +142,7 @@ class DeepSeekAdapter(Adapter):
         path = (
             absolute(context.settings.config_path)
             if context.settings.config_path
-            else (home / "settings.yaml")
+            else (home / "cordis.patch.yml")
         )
         executable = find_executable(self.command, context.environment, context.settings.executable)
         if executable is None:
@@ -184,18 +202,21 @@ class DeepSeekAdapter(Adapter):
                 },
             }
 
-            def render(secrets, role=role):
+            owner = f"{self.id}/{provider.name}"
+
+            def patch(secrets, role=role):
                 return encode(
-                    {
-                        "llm-pi-ai": {
-                            "providers": {f"hs-{provider.name}": catalog(provider, secrets)}
+                    [
+                        {
+                            "id": "llm-pi-ai",
+                            "config": {
+                                "providers": {f"hs-{provider.name}": catalog(provider, secrets)}
+                            },
                         },
-                        "agent-default-model": selection(provider, role),
-                    }
+                        {"id": "agent-default-model", "config": selection(provider, role)},
+                    ]
                 )
 
-            owner = f"{self.id}/{provider.name}"
-            result.append(Artifact(root / "settings.yaml", "profile", owner, render, parse))
             result.append(
                 Artifact(
                     profile / "package.json",
@@ -210,42 +231,59 @@ class DeepSeekAdapter(Adapter):
                     profile / "cordis.patch.yml",
                     "profile",
                     owner,
-                    lambda _: b"[]\n",
-                    lambda data: YAML(typ="safe").load(data),
+                    patch,
+                    parse_patch,
                 )
             )
         return tuple(result)
 
     def defaults(self, providers, selected, role, context):
         path = context.detection.default_paths[0]
-        current, baseline = parse(context.read(path)), context.baseline(path)
-        previous = parse(baseline) if baseline is not None else None
+        current, baseline = parse_patch(context.read(path)), context.baseline(path)
+        previous = parse_patch(baseline) if baseline is not None else None
+        current_map = {row["id"]: row for row in current if "id" in row}
+        previous_map = (
+            {row["id"]: row for row in previous if "id" in row} if previous is not None else None
+        )
         for provider in providers:
             name = f"hs-{provider.name}"
-            owned_path = ("llm-pi-ai", "providers", name)
-            if get_field(current, owned_path) is not MISSING and (
-                previous is None or get_field(previous, owned_path) is MISSING
+            owned_path = ("llm-pi-ai", "config", "providers", name)
+            if get_field(current_map, owned_path) is not MISSING and (
+                previous_map is None or get_field(previous_map, owned_path) is MISSING
             ):
                 raise ConflictError("DeepSeek managed provider name already exists")
 
         def render(secrets):
             changes = {
-                ("llm-pi-ai", "providers", f"hs-{p.name}"): catalog(p, secrets) for p in providers
+                ("llm-pi-ai", "config", "providers", f"hs-{p.name}"): catalog(p, secrets)
+                for p in providers
             }
-            previous_providers = (previous or {}).get("llm-pi-ai", {}).get("providers", {})
+            previous_providers = (
+                (previous_map or {}).get("llm-pi-ai", {}).get("config", {}).get("providers", {})
+            )
             desired_names = {f"hs-{p.name}" for p in providers}
             for name in previous_providers:
                 if name.startswith("hs-") and name not in desired_names:
-                    changes[("llm-pi-ai", "providers", name)] = MISSING
+                    changes[("llm-pi-ai", "config", "providers", name)] = MISSING
             changes.update(
-                {("agent-default-model", k): v for k, v in selection(selected, role).items()}
+                {
+                    ("agent-default-model", "config", k): v
+                    for k, v in selection(selected, role).items()
+                }
             )
-            changes[("agent-default-model", "reasoningEffort")] = MISSING
-            merge_fields(current, previous, changes)
-            document = parse(encode(current))
+            changes[("agent-default-model", "config", "reasoningEffort")] = MISSING
+            merge_fields(current_map, previous_map, changes)
+            document = parse_patch(encode(current))
+            rows = {row["id"]: row for row in document if "id" in row}
             for keys, value in changes.items():
-                node = document
-                for key in keys[:-1]:
+                if keys[0] not in rows:
+                    if value is MISSING:
+                        continue
+                    row = {"id": keys[0]}
+                    document.append(row)
+                    rows[keys[0]] = row
+                node = rows[keys[0]]
+                for key in keys[1:-1]:
                     if key not in node:
                         node[key] = {}
                     node = node[key]
@@ -255,9 +293,17 @@ class DeepSeekAdapter(Adapter):
                     node[keys[-1]] = value
             return encode(document)
 
-        return (Artifact(path, "default", f"{self.id}/default", render, parse, merged=True),)
+        return (Artifact(path, "default", f"{self.id}/default", render, parse_patch, merged=True),)
 
     def launch(self, provider, role, arguments, context, secrets):
+        root = context.paths.runtime(self.id, provider.command_alias) / role
+        if context.read(root / "settings.yaml") or parse_patch(
+            context.read(root / "cordis.patch.yml")
+        ):
+            raise HarnessSyncError(
+                "DeepSeek managed home contains legacy settings or a home patch; "
+                "review and remove that override before launching the managed profile"
+            )
         template = Settings.model_validate(context.settings.options).base_profile
         if arguments and arguments[0] == "web":
             if template != "web":
@@ -275,7 +321,7 @@ class DeepSeekAdapter(Adapter):
         ):
             raise HarnessSyncError("Managed DeepSeek web launches require an explicit --port")
         environment = {env_name(key): secrets.get(key) for key in provider.secret_ids()}
-        environment["DSH_HOME"] = str(context.paths.runtime(self.id, provider.command_alias) / role)
+        environment["DSH_HOME"] = str(root)
         return LaunchSpec(
             ("--profile", template) + arguments,
             environment,
