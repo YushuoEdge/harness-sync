@@ -67,7 +67,8 @@ def test_installed_cli_detect_without_native_execution(tmp_path):
     )
     assert result.returncode == 0, result.stderr
     detections = json.loads(result.stdout)
-    assert len(detections) == 8
+    assert len(detections) == 9
+    assert "zcode" in detections
     from harness_sync.registry import Registry
 
     implemented = Registry.bundled().adapters

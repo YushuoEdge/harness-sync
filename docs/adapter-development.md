@@ -1,6 +1,6 @@
 # Implementing a harness adapter
 
-The shared framework and all eight approved v1 native adapters are implemented for pinned releases. Native code stays in each adapter directory without duplicating the core. GitHub Copilot CLI is a documentation-only candidate with a revised provider-registry design awaiting separate implementation approval; Cursor Agent CLI is a documentation-only blocked design. Qoder CLI is a selected documentation target blocked on supported noninteractive BYOK provisioning; its selection does not authorize implementation. The official open-source ZCode CLI is also selected for documentation, with a source-backed provider-file design awaiting implementation approval and native validation. Start with the target directory's `SPEC.md`; it describes native behavior, scope and version-verification gates.
+The shared framework, the original eight v1 native adapters and ZCode are implemented for pinned releases. Native code stays in each adapter directory without duplicating the core. Copilot remains a documentation-only candidate awaiting implementation approval. Qoder implementation was requested but remains blocked on supported noninteractive BYOK provisioning; Cursor is also blocked on a supported custom-provider interface. Official ZCode now has a validated native provider-file adapter. Start with the target directory's `SPEC.md`; it describes native behavior, scope and version-verification gates.
 
 ## Ownership and work boundary
 
@@ -20,7 +20,7 @@ harnesses/<harness-id>/
 
 Do not add native field names, paths, flags or protocol quirks to the CLI/core. Do not implement locks, backups, wrappers, shell export generation, or secret storage in an adapter. If a shared interface needs changing, propose it explicitly and update its contract tests; avoid silently forking a private framework.
 
-The registry discovers packaged `harnesses/*/adapter.json` manifests and imports an adjacent `adapter.py` only when present. The factory must return a subclass of `harness_sync.contracts.Adapter`. Configuration cannot name modules to import. All eight original v1 adapters are registered native implementations; future manifests without `adapter.py` report `not-implemented`. Documentation-only directories without manifests, currently Copilot, Cursor, Qoder and ZCode, are not registry entries. The fake adapter in [tests/conftest.py](../tests/conftest.py) demonstrates the entire contract and is never packaged as a production adapter.
+The registry discovers packaged `harnesses/*/adapter.json` manifests and imports an adjacent `adapter.py` only when present. The factory must return a subclass of `harness_sync.contracts.Adapter`. Configuration cannot name modules to import. The original eight v1 adapters and ZCode are registered native implementations; future manifests without `adapter.py` report `not-implemented`. Documentation-only directories without manifests, currently Copilot, Cursor and Qoder, are not registry entries. The fake adapter in [tests/conftest.py](../tests/conftest.py) demonstrates the entire contract and is never packaged as a production adapter.
 
 ## Core modules
 

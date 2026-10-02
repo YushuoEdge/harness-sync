@@ -1,8 +1,8 @@
 # Harness Sync Config — specification
 
-Status: **Shared framework and all eight original v1 adapters implemented for pinned releases.**
+Status: **Shared framework and nine native adapters implemented for pinned releases.**
 
-This document describes the full target design. The current framework subset and deliberate API refinements are documented in [adapter development](docs/adapter-development.md). In particular: native options are under typed `options` objects; plans currently show metadata rather than native content diffs; prune/best-effort/adopt-changes are pending. All eight original v1 adapters are implemented; supported releases and protocols are listed in the compatibility matrix. This does not imply every target feature below is implemented.
+This document describes the full target design. The current framework subset and deliberate API refinements are documented in [adapter development](docs/adapter-development.md). In particular: native options are under typed `options` objects; plans currently show metadata rather than native content diffs; prune/best-effort/adopt-changes are pending. The original eight v1 adapters and ZCode are implemented; supported releases and protocols are listed in the compatibility matrix. This does not imply every target feature below is implemented.
 
 ## 1. Purpose and scope
 
@@ -10,7 +10,7 @@ One human-edited YAML configuration defines providers and three task roles per p
 
 The proposed executable is `harness-sync` (no short alias installed automatically). Initial platform scope: macOS and Linux, with Bash and Zsh integration. Implementation proposal: Python 3.11+, packaged for `uv tool install` / `pipx`; standard-library argparse, Pydantic and ruamel.yaml in the core; tomlkit and format-preserving JSON/JSONC/JSON5 editing as native adapters require. Dependency versions and JSON editing library will be selected and pinned during implementation. Native Windows, a GUI, protocol proxying, OAuth migration, and automatic task-complexity classification are outside v1.
 
-All eight originally approved adapters are required for v1: Claude Code, Codex, Pi, DeepSeek Harness, Kimi Code, OpenCode, Hermes Agent, and OpenClaw. GitHub Copilot CLI is an additional documented candidate that requires separate implementation approval. Its revised CLI-only design uses managed per-provider/per-role registries selected through `COPILOT_PROVIDERS_CONFIG`, preserves native state and initially rejects native default writes; exact schema, credential and model-selector behavior require pinned-release validation. See the [Copilot specification](harnesses/copilot/SPEC.md). Cursor Agent CLI is a documented blocked design and is outside the v1 implementation set unless a safe custom-provider interface becomes available and its scope is approved. Qoder CLI is a selected additional documentation target, blocked on a supported noninteractive BYOK provisioning interface; see the [Qoder specification](harnesses/qoder/SPEC.md). The official open-source ZCode CLI is also a selected documentation target, with a source-backed custom-provider design pending native validation; see the [ZCode specification](harnesses/zcode/SPEC.md). Selection does not add either harness to the original v1 implementation set or authorize native implementation. A draft adapter is not implemented support. Each adapter must pass its release gates before v1 can claim support; incompatible provider/harness pairs receive explicit diagnostics.
+All eight originally approved adapters are required for v1: Claude Code, Codex, Pi, DeepSeek Harness, Kimi Code, OpenCode, Hermes Agent, and OpenClaw. GitHub Copilot CLI is an additional documented candidate that requires separate implementation approval. Its revised CLI-only design uses managed per-provider/per-role registries selected through `COPILOT_PROVIDERS_CONFIG`, preserves native state and initially rejects native default writes; exact schema, credential and model-selector behavior require pinned-release validation. See the [Copilot specification](harnesses/copilot/SPEC.md). Cursor Agent CLI is a documented blocked design and is outside the v1 implementation set unless a safe custom-provider interface becomes available and its scope is approved. Qoder CLI is a selected additional documentation target, blocked on a supported noninteractive BYOK provisioning interface; see the [Qoder specification](harnesses/qoder/SPEC.md). The official open-source ZCode CLI was subsequently authorized and implemented for distribution 3.14.3 / Agent 0.16.9; see the [ZCode specification](harnesses/zcode/SPEC.md). Qoder implementation was requested, but remains blocked by its native provisioning interface. Neither addition changes the original eight-adapter v1 requirement. A draft adapter is not implemented support. Each adapter must pass its release gates before v1 can claim support; incompatible provider/harness pairs receive explicit diagnostics.
 
 ## 2. Requirements and decisions
 
@@ -259,7 +259,7 @@ harnesses/
   copilot/{README.md,SPEC.md}  # Candidate design; no registry manifest
   cursor/{README.md,SPEC.md}   # Blocked design; no registry manifest
   qoder/{README.md,SPEC.md}    # Selected, blocked design; no registry manifest
-  zcode/{README.md,SPEC.md}    # Selected candidate design; no registry manifest
+  zcode/{README.md,SPEC.md,adapter.json,adapter.py,fixtures/,tests/}
 # Shared framework exists; native implementations are separate:
 # src/harness_sync/ — CLI, schema, secrets, planner, transactions, launcher
 # harnesses/<id>/adapter.py, fixtures/, tests/ — all harness-specific behavior
@@ -267,7 +267,7 @@ harnesses/
 # pyproject.toml — packaging includes harness adapter resources explicitly
 ```
 
-The adapter registry discovers the eight approved v1 slots from packaged manifests and loads native code only when an adjacent implementation exists; no downloaded plugins or config-selected Python imports are allowed. The documentation-only Copilot, Cursor, Qoder and ZCode directories have no manifests and are not advertised by the registry. The shared core owns filesystem writes, secret resolution, locking, backups, and redaction.
+The adapter registry discovers nine implemented adapters from packaged manifests and loads native code only when an adjacent implementation exists; no downloaded plugins or config-selected Python imports are allowed. The documentation-only Copilot, Cursor and Qoder directories have no manifests and are not advertised by the registry. The shared core owns filesystem writes, secret resolution, locking, backups, and redaction.
 
 Adapter contract (exact types in `src/harness_sync/contracts.py`):
 
@@ -296,13 +296,13 @@ Required tests include:
 - No default-file creation/modification during profile-only sync, including wrapper launch.
 - Authorized default merges preserve unrelated config, comments, OAuth and permissions; repeated sync is byte/mtime stable.
 - Two concurrent providers with the same native API-key variable receive different correct endpoints/keys in child processes; original command/config stays intact.
-- Each role selects the correct model for all eight adapters. Native precedence cannot silently pair an old key with a new endpoint.
+- Each role selects the correct model for all registered adapters. Native precedence cannot silently pair an old key with a new endpoint.
 - Command collisions, edited wrappers, spaces and quotes in paths/arguments, signal forwarding and no recursion.
 - Key rotation, invalid/partial edits, missing/removed keys, shell escaping and no secret leakage in any diagnostic/output.
 - Fresh reads on every managed launch, unchanged-output idempotence, concurrent atomic saves, selection boundaries, default permission changes, missing installations and version changes; bare original commands remain unwrapped.
 - Fault-injected write failure, crash recovery, cross-process locking, external edits, conservative rollback, symlink/path-target checks and permissions.
 - Isolated native smoke checks on every claimed supported version; no paid inference unless explicitly enabled with test credentials.
-- Documentation includes all eight v1 adapters, source links, known limitations and verified-version evidence; additional candidate or blocked designs are labeled separately.
+- Documentation includes all implemented adapters, source links, known limitations and verified-version evidence; additional candidate or blocked designs are labeled separately.
 
 ## 12. Implementation boundary
 

@@ -2,9 +2,9 @@
 
 Manage providers, three model roles, and API keys in one place, then synchronize them across coding harnesses.
 
-**Status: shared framework and all eight original v1 adapters implemented for pinned native releases.**
+**Status: shared framework and nine native adapters implemented for pinned releases.**
 
-The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Codex CLI 0.154.0 is supported through native profile-v2 files. Claude Code 2.1.278 supports Anthropic settings overlays. Pi 0.85.1 supports isolated catalogs. DeepSeek Harness 0.1.2-rc.1 supports bundled isolated profiles. Kimi CLI 1.49.0 supports its legacy isolated config. OpenCode 1.17.13 supports inline overlays. Hermes v0.21.0 / 245e4800 supports isolated named providers. OpenClaw 2026.6.11 / e085fa1 supports isolated role state and native secret references. GitHub Copilot CLI has a revised managed-provider-registry design as an additional candidate, but no manifest or implementation; Cursor Agent CLI is documented as blocked on a safe custom-provider interface. Qoder CLI and the official open-source ZCode CLI are selected documentation targets: Qoder remains blocked on noninteractive BYOK provisioning, while ZCode has a source-backed custom-provider design pending implementation approval and native validation. The fake test adapter continues to exercise shared workflows without touching real harnesses.
+The CLI, strict schema, secrets store, adapter API, planner, transaction engine, wrappers and pre-launch synchronization are implemented. Supported native releases are Codex 0.160.0, Claude Code 2.1.287, Pi 1.0.0, DeepSeek Harness 0.2.0-rc.2, Kimi Code 2.1.1, OpenCode 1.18.34, Hermes 0.21.5 / 5bba024d, OpenClaw 2026.9.7 / c074824 and official ZCode 3.14.3 / Agent 0.16.9. See the [compatibility matrix](docs/compatibility.md) for protocol and launch boundaries. Copilot remains a documentation-only candidate. Updated Qoder 1.1.65 and Cursor 2026.10.01-e373342 remain blocked on a supported custom-provider provisioning interface. The fake test adapter exercises shared workflows without touching real harnesses.
 
 ## Install and test the framework
 
@@ -41,7 +41,7 @@ Read the [adapter development guide](docs/adapter-development.md), then the targ
 | OpenClaw | [Overview](harnesses/openclaw/README.md) | [Spec](harnesses/openclaw/SPEC.md) |
 | GitHub Copilot CLI (candidate) | [Overview](harnesses/copilot/README.md) | [Spec](harnesses/copilot/SPEC.md) |
 | Qoder CLI (selected; blocked design) | [Overview](harnesses/qoder/README.md) | [Spec](harnesses/qoder/SPEC.md) |
-| ZCode CLI (selected; candidate design) | [Overview](harnesses/zcode/README.md) | [Spec](harnesses/zcode/SPEC.md) |
+| ZCode CLI | [Overview](harnesses/zcode/README.md) | [Spec](harnesses/zcode/SPEC.md) |
 | Cursor Agent CLI (blocked design) | [Overview](harnesses/cursor/README.md) | [Spec](harnesses/cursor/SPEC.md) |
 
 ## Configuration concept
@@ -101,6 +101,6 @@ Run this after the file has been generated, or add it to your startup file if yo
 
 ## Implementation scope
 
-The shared framework and all eight original v1 adapters are implemented for pinned releases; the Copilot, Cursor, Qoder and ZCode directories are documentation-only and are not registry entries. The core uses Python 3.11+, Pydantic, ruamel.yaml, tomlkit and the standard-library CLI parser; it targets macOS/Linux.
+The shared framework, the original eight v1 adapters and ZCode are implemented for pinned releases. Copilot, Cursor and Qoder remain documentation-only and are not registry entries. The core uses Python 3.11+, Pydantic, ruamel.yaml, tomlkit and the standard-library CLI parser; it targets macOS/Linux.
 
 Default writes remain an explicit runtime choice. The tool never modifies shell startup files. Current implementation details and limitations are in the adapter development guide.
