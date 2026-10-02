@@ -1,4 +1,4 @@
-"""OpenCode 1.17.13 bundled SDKs and highest local configuration overlay."""
+"""OpenCode 1.18.34 bundled SDKs and highest local configuration overlay."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from harness_sync.paths import absolute
 from harness_sync.schema import SecretRef, env_name
 from harnesses.opencode.jsonc import edit, parse
 
-VERSION = "1.17.13"
+VERSION = "1.18.34"
 SDK = {
     "anthropic": "@ai-sdk/anthropic",
     "openai-chat": "@ai-sdk/openai-compatible",

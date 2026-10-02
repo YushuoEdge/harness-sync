@@ -1,6 +1,6 @@
 # OpenCode adapter
 
-Implemented for **OpenCode 1.17.13**. Four verified bundled SDK mappings: Anthropic Messages,
+Implemented for **OpenCode 1.18.34**. Four verified bundled SDK mappings: Anthropic Messages,
 OpenAI Chat, OpenAI Responses and Google Generative AI. Unknown versions fail closed.
 
 ```sh
@@ -28,4 +28,12 @@ Version/help fixtures and tests cover roles, protocols, conflict detection and p
 On 2026-10-01 localhost checks verified all four protocols/roles with fake keys, including stale
 project provider/model endpoints, keys, SDK mappings and agent model selection. No paid inference
 or personal-config changes were used. See [spec](SPEC.md) and
-[pinned native provider source](https://github.com/anomalyco/opencode/blob/v1.17.13/packages/opencode/src/provider/provider.ts).
+[pinned native provider source](https://github.com/anomalyco/opencode/blob/v1.18.34/packages/opencode/src/provider/provider.ts).
+
+## 2026-10-02 release validation
+
+The installed OpenCode was updated to **1.18.34** and its native help/version fixtures refreshed.
+All four protocols and all three roles passed localhost error-response checks with exact
+slash-containing IDs, custom headers and fake keys. Unit tests passed. The existing SDK catalog
+and managed launch contract remain compatible. No personal default or authentication files
+were changed. These routing checks do not assert successful inference.
