@@ -163,8 +163,9 @@ def test_symlink_output_rejected(project):
 def test_bundled_slots_report_implementation_status(project, monkeypatch):
     base, _, _ = project
     registry = Registry.bundled()
-    assert len(registry.catalog) == 8
+    assert len(registry.catalog) == 9
     assert "codex" in registry.adapters
+    assert "zcode" in registry.adapters
     # Exercise discovery without launching any user's installed harness.
     monkeypatch.setenv("PATH", "")
     engine = Engine(base.paths, registry)

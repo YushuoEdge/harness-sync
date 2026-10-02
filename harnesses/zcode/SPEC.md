@@ -1,62 +1,91 @@
 # ZCode CLI adapter specification
 
-Status: **Selected harness; source-backed adapter candidate, pending implementation and native validation.** Proposed adapter ID: `zcode`. Native command: `zcode`.
+Status: **Implemented for distribution 3.14.3 / Agent CLI 0.16.9.** Adapter ID and command: `zcode`.
+Implementation was requested on 2026-10-02; native default writes remain unsupported.
+The [overall specification](../../SPEC.md) governs ownership, transactions and secrets.
 
-Selection targets the official open-source `zai-org/ZCode` repository outside the original eight-adapter v1 implementation set. It does not authorize native implementation or default writes. Source revision `29628c9acdb81b703bbd4080c207a0e7ce5e276e` was reviewed on 2026-10-01 (America/New_York); no installed release was validated and no manifest is included.
+## Native source and installed distribution
 
-## Official CLI and provider configuration
+This targets the official open-source `zai-org/ZCode`, revision
+`29628c9acdb81b703bbd4080c207a0e7ce5e276e`. Its unified entry starts the TUI, forwards Agent options,
+and also supplies Web mode. Detection requires both distribution version and Agent help identity,
+using a temporary data root and clearing inherited provider-file settings. Help/version fixtures
+record the installed source build. [Upstream build instructions](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/README.en.md).
 
-The official repository includes desktop, Web and terminal applications. The unified `zcode` entry point starts the TUI by default, supports `--web`, and forwards other options to the Agent CLI. Its standalone source entry is under `apps/zcode-cli/packages/cli/`. [Upstream README](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/README.en.md).
+The locked source build needed explicit transpilation of source-only `@zcode/shared` for the
+packager's `dist` exports. `scripts/prepare_shared_dist.mjs` records the workaround. After the
+ordinary `pnpm build:zcode --base-url <packaging-url>` build, run that script against the checkout,
+then `node scripts/build-zcode.mjs --skip-build --base-url <packaging-url>` and extract the generated
+archive. The URL is used for generated installer metadata; no hosted updater was deployed.
+See README for this machine's installed path, Node requirement and tarball hash.
 
-The current CLI locates personal provider configuration at `~/.zcode/v2/provider_config.json`. `ZCODE_DATA_BASE_DIR` changes the application data base, and `ZCODE_PERSONAL_PROVIDER_CONFIG_FILE` selects a separate personal provider file. Built-in configuration is separately selected by `ZCODE_BUILTIN_PROVIDER_CONFIG_FILE`; the preparation layer normally resolves it from the distribution. [CLI provider environment](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/apps/zcode-cli/packages/cli/src/provider-runtime-env.ts) and [runtime path constants](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/provider-node/src/runtime-paths.ts).
+## Private schema and provider selection
 
-The file is a versioned JSON document, not the older flat `provider`/`model` config:
+The personal provider file uses `schemaVersion: 1` with:
 
-| Native field | Purpose |
+| Field | Adapter behavior |
 | --- | --- |
-| `schemaVersion` | Currently `1` |
-| `config.providerConfigRules.providerRules` | Personal provider rule array |
-| Rule `providerId`, `providerName`, `enabled` | Local identity, display label and availability |
-| Rule `config.group` | `standard-personal` for an independent custom provider |
-| Rule `config.access` | `{ "type": "api-key", "apiKey": "<private literal>" }` |
-| Rule `config.api` | Protocol `type`, `baseUrl` and optional `headers` |
-| Rule `config.personalModelIds` | Exact upstream model IDs for this provider |
-| `config.modelConfigRules` | `providerModelRules` and `manualProviderModelRules` arrays |
-| `config.defaultModelSelection` | Structured `providerId`, `modelId`, optional `options.reasoningLevel` |
+| `config.providerConfigRules.providerRules` | One enabled `hs-<name>` provider |
+| Rule `config.group` | `standard-personal` |
+| Rule `config.access` | `type: api-key`, private literal `apiKey` |
+| Rule `config.api` | Explicit `type`, `baseUrl`, optional literal/secret headers |
+| Rule `config.personalModelIds` | Exact provider-local upstream IDs |
+| `config.modelConfigRules.providerModelRules` | Complete capabilities and option-map rules per model |
+| `config.modelConfigRules.manualProviderModelRules` | Empty |
+| `config.defaultModelSelection` | Structured provider/model ID and disabled reasoning |
 
-These fields are defined by the [file codec](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/provider-node/src/provider-config-file-codec.ts), [provider rule schema](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/provider/src/config/rule-data-schema.ts), [provider data schema](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/provider/src/config/provider-data-schema.ts) and [model selection schema](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/shared/src/model-selection.ts). Model availability additionally depends on resolved capabilities and supported reasoning levels; listing an arbitrary model ID alone does not prove it is runnable. Capture the installed release's smart/manual metadata behavior before rendering models.
+The [file codec](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/provider-node/src/provider-config-file-codec.ts),
+[rule schema](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/provider/src/config/rule-data-schema.ts)
+and [capability schema](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/shared/src/model-config.ts)
+define the versioned format. Generated JSON rejects duplicate keys and unknown schema versions.
+The common ownership/transaction checks reject manual edits before replacement.
 
-## Protocol mappings and selection
+| Canonical protocol | Native API type |
+| --- | --- |
+| `anthropic` | `anthropic-messages` |
+| `openai-chat` | `openai-chat-completions` |
+| `openai-responses` | `openai-responses` |
 
-| Canonical protocol | Native `config.api.type` | Status |
-| --- | --- | --- |
-| `anthropic` | `anthropic-messages` | Source-backed candidate |
-| `openai-chat` | `openai-chat-completions` | Source-backed candidate |
-| `openai-responses` | `openai-responses` | Source-backed candidate |
-| `google-genai` | None in the reviewed enum | No direct mapping |
+Each model must specify positive context/output capacities. Text, optional images and tool calling
+are declared explicitly. Output ceilings map to native API token parameters. Reasoning `true` or
+any effort request is rejected because the canonical schema does not provide the necessary native
+model-specific reasoning expression. Repeated exact IDs are deduplicated only with equal metadata.
+Use `provider.endpoint_for("zcode")`, `protocol_for("zcode")` and `model.upstream_id("zcode")`;
+never parse a display label or composite picker string to guess an ID.
 
-The native execution layer dispatches all three listed formats to their corresponding SDK adapters. [Model execution](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/apps/zcode-cli/packages/adapters/src/model/model-execution.ts). This proves an implementation path exists in source, not compatibility with an installed binary or every gateway.
+## Isolation, fallback and launch grammar
 
-The TUI supports `/model <provider/model>` and resolves exact catalog entries before parsing display syntax. The CLI parser supports `--prompt`, resume/continue and other modes, but does not define a `--model` startup flag at this revision. Prefer the structured default selection in the managed provider file. [Model command](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/apps/zcode-cli/packages/cli/src/command-center/handlers/model.ts) and [CLI arguments](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/apps/zcode-cli/packages/cli/src/arguments.ts).
+Each provider/role owns `provider_config.json` and `builtin.json` in its managed runtime root.
+The latter is a valid empty schema-version-1 built-in catalog. Files use mode 0600 and scoped
+secrets. Sync stages both with shared backups, redaction, rotation and rollback support.
 
-## Proposed managed profiles and launches
+Child environment selects `ZCODE_PERSONAL_PROVIDER_CONFIG_FILE`, `ZCODE_BUILTIN_PROVIDER_CONFIG_FILE`
+and `ZCODE_DATA_BASE_DIR`. OS `HOME` is preserved; ZCode's data and accounts live in the selected
+root. No real account stores, sessions, plugin registries or credentials are copied. Clear inherited
+provider/data variables, native gateway keys and `ZCODE_BUILTIN_PROVIDER_BUNDLED_CONFIG_FILE`.
+The explicit personal/built-in pair skips bundled-provider preparation, and absence of the bundled
+refresh source disables its remote synchronizer. [Provider preparation](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/apps/zcode-cli/packages/cli/src/provider-runtime-env.ts)
+and [registry runtime](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/apps/zcode-cli/packages/bootstrap/src/app/process-provider-registry-runtime.ts).
 
-- Generate one private `provider_config.json` per provider and role under the managed profile root. Include only that provider's secret and model catalog, explicit model rules, and the selected role's structured default. `zcode-<alias>` would select daily.
-- Launch the verified original executable with child-scoped `ZCODE_PERSONAL_PROVIDER_CONFIG_FILE`. Preserve OS `HOME` and native session/plugin/settings locations. Provider-file separation alone means personal state remains shared; do not claim account or session isolation.
-- Render scoped secrets as native literals in mode-0600 files. Environment interpolation of `access.apiKey` has not been established; do not substitute an environment variable name as if it were the credential. Apply the shared staging, backup and redaction rules to every generated secret copy.
-- Consume `provider.endpoint_for("zcode")`, protocol and `model.upstream_id("zcode")`. Preserve IDs as structured fields, including slashes and dollar signs, rather than round-tripping through picker strings.
-- Verify provider-file normalization, UI edits, inherited built-in/account configuration, legacy import and invalid-file recovery. The native repository can normalize files and recover with an empty overlay in memory, so prevalidation and failure-without-fallback tests are required. [Personal repository](https://github.com/zai-org/ZCode/blob/29628c9acdb81b703bbd4080c207a0e7ce5e276e/packages/provider-node/src/personal-provider-config-repository.ts).
-- Verify resume/continue, explicit task targets, project settings, subagent profiles and interactive model changes. Reject modes that can escape the canonical tuple until native precedence is proven. Do not weaken enforced policy.
-- Preserve account authentication stores; canonical API-key provider profiles must not depend on copying or replacing subscription-account tokens.
+The fresh-launch default is the selected role. The verified Agent parser has no `--model` startup
+flag. Reject model overrides, resume/continue (including short forms), explicit goals/targets,
+dynamic workflows, memory benchmark, Web/stdio/server surfaces and login/plugin administration.
+Use the original `zcode` for those operations. Project instructions and native permission settings
+are preserved; the adapter does not change permission mode.
 
-## Default writes
+Fresh launches are verified for primary requests. Interactive model/session commands, completed
+inference, subagents, plugins, desktop/Web and long-lived sessions are outside this verification.
+The catalog contains only the selected canonical provider; manually choosing another role model
+inside the TUI changes the running session and does not change the next launch's default.
 
-Initially reject native default-write requests. Managed files may have their own `defaultModelSelection`; this selects a role only within the managed provider profile. It does not authorize changes to the user's shared `~/.zcode/v2/provider_config.json`. Native default support needs separately specified owned-field merges and preservation tests.
+## Default writes and verification
 
-## Release gates
+`default.write: true` and `--write-defaults` fail explicitly. Managed `defaultModelSelection` applies
+only inside the managed profile. Normal synchronization does not write shared `~/.zcode` files.
 
-1. Pin a supported CLI distribution and record sanitized help/version fixtures, versioned provider files and required model metadata. Source inspection alone does not pass a native smoke gate.
-2. Prove all three claimed protocols against local stub endpoints: exact upstream ID, base URL, credentials and headers; test custom/slash/dollar IDs and two providers sharing a display label.
-3. Prove role/default selection, metadata admission, reasoning levels, key rotation, invalid-file recovery and no built-in/account fallback.
-4. Prove concurrent providers, shared-state preservation, interactive/native edits, resumed tasks and subagent routing. Verify idempotence, private credentials and rollback without normal-sync default writes.
-5. Obtain implementation approval, then add the manifest, native adapter and tests. The original eight-adapter v1 set remains unchanged.
+On 2026-10-02 native localhost checks proved all three protocols and roles, two providers with
+shared display labels, slash/dollar IDs, per-harness ID overrides, exact credentials, secret headers,
+rotation and clearing stale inherited provider sources. The opt-in `tests/smoke_native.py` reproduces
+those checks with fake keys and HTTP errors. Unit/engine tests prove version gates, unsupported
+metadata, private files, idempotence, default protection, identity separation and rollback.
+No real credentials, paid inference, user default writes or account migration were used.
