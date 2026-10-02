@@ -1,4 +1,4 @@
-"""Explicit legacy Kimi CLI 1.49.0 TOML/home mapping; no migration."""
+"""Kimi Code 2.1.1 TOML/home mapping; no legacy data migration."""
 
 from __future__ import annotations
 
@@ -17,12 +17,12 @@ from harness_sync.merge import MISSING, get_field, merge_fields
 from harness_sync.paths import absolute
 from harness_sync.schema import SecretRef, StrictModel
 
-VERSION = "1.49.0"
+VERSION = "2.1.1"
 APIS = {
     "anthropic": "anthropic",
-    "openai-chat": "openai_legacy",
+    "openai-chat": "openai",
     "openai-responses": "openai_responses",
-    "google-genai": "google_genai",
+    "google-genai": "google-genai",
 }
 UNSET = frozenset(
     {
@@ -38,6 +38,11 @@ UNSET = frozenset(
         "ANTHROPIC_AUTH_TOKEN",
         "GOOGLE_GENAI_USE_VERTEXAI",
         "KIMI_MODEL_NAME",
+        "KIMI_MODEL_API_KEY",
+        "KIMI_MODEL_PROVIDER_TYPE",
+        "KIMI_MODEL_BASE_URL",
+        "KIMI_MODEL",
+        "KIMI_DEFAULT_MODEL",
         "KIMI_MODEL_MAX_CONTEXT_SIZE",
         "KIMI_MODEL_CAPABILITIES",
         "KIMI_MODEL_TEMPERATURE",
@@ -65,6 +70,7 @@ def provider_fields(provider, secrets):
         "type": APIS[provider.protocol_for("kimi-code")],
         "base_url": provider.endpoint_for("kimi-code"),
         "api_key": secrets.get(provider.api_key.secret),
+        "model_source": "static",
         "custom_headers": {
             key: secrets.get(value.secret) if isinstance(value, SecretRef) else value
             for key, value in provider.headers.items()
@@ -120,8 +126,8 @@ class KimiAdapter(Adapter):
 
     def detect(self, context):
         home = absolute(
-            context.environment.get("KIMI_SHARE_DIR")
-            or Path(context.environment.get("HOME", str(Path.home()))) / ".kimi"
+            context.environment.get("KIMI_CODE_HOME")
+            or Path(context.environment.get("HOME", str(Path.home()))) / ".kimi-code"
         )
         path = (
             absolute(context.settings.config_path)
@@ -144,12 +150,12 @@ class KimiAdapter(Adapter):
                 )
         except UnsupportedError:
             return Detection(self.id, "probe-failed", executable, default_paths=(path,))
-        match = re.fullmatch(r"kimi, version ([\d.]+)", version.stdout.strip())
+        match = re.fullmatch(r"([\d.]+)", version.stdout.strip())
         number = match[1] if match else None
         supported = (
             number == VERSION
             and version.returncode == help_result.returncode == 0
-            and "--config-file" in help_result.stdout
+            and "provider" in help_result.stdout
             and "--model" in help_result.stdout
         )
         return Detection(
@@ -158,13 +164,13 @@ class KimiAdapter(Adapter):
             executable,
             number,
             default_paths=(path,),
-            capabilities=("legacy-share-dir",) if supported else (),
+            capabilities=("code-home",) if supported else (),
         )
 
     def validate(self, provider, context):
         super().validate(provider, context)
-        if "legacy-share-dir" not in context.detection.capabilities:
-            raise HarnessSyncError("Kimi legacy home/config capability was not verified")
+        if "code-home" not in context.detection.capabilities:
+            raise HarnessSyncError("Kimi Code home/config capability was not verified")
         if not isinstance(provider.api_key, SecretRef):
             raise HarnessSyncError("Kimi requires an API-key reference")
         budget = Settings.model_validate(context.settings.options).reserved_context_size or 50000
@@ -176,7 +182,9 @@ class KimiAdapter(Adapter):
                     "Kimi context_window must exceed reserved_context_size (native default: 50000)"
                 )
             if model.max_output_tokens is not None or model.reasoning_effort is not None:
-                raise HarnessSyncError("Kimi 1.49.0 cannot map output limits or reasoning effort")
+                raise HarnessSyncError(
+                    "Kimi Code 2.1.1 cannot map output limits or reasoning effort"
+                )
 
     def profiles(self, provider, context):
         path = context.paths.runtime(self.id, provider.command_alias) / "config.toml"
@@ -239,18 +247,18 @@ class KimiAdapter(Adapter):
                 "-m",
                 "--agent",
                 "--agent-file",
+                "--session",
+                "-S",
+                "--continue",
+                "-c",
             } or (arg.startswith("-m") and not arg.startswith("--")):
                 raise HarnessSyncError("Kimi routing flags conflict with the managed profile")
         root = context.paths.runtime(self.id, provider.command_alias)
         prefix = (
-            "--config-file",
-            str(root / "config.toml"),
             "--model",
             f"hs-{provider.command_alias}-{role}",
         )
-        if provider.model_for(role).reasoning is not None:
-            prefix += ("--thinking" if provider.model_for(role).reasoning else "--no-thinking",)
-        return LaunchSpec(prefix + arguments, {"KIMI_SHARE_DIR": str(root)}, UNSET)
+        return LaunchSpec(prefix + arguments, {"KIMI_CODE_HOME": str(root)}, UNSET)
 
 
 def create_adapter():
